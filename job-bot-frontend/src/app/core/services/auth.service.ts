@@ -49,4 +49,10 @@ export class AuthService {
     localStorage.removeItem(REFRESH_KEY);
     this._token.set(null);
   }
+
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/api/auth/me`).pipe(
+      tap(() => this.logout())
+    );
+  }
 }

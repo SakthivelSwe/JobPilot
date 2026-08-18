@@ -64,6 +64,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        tenant_identifier_resolver: com.jobbot.config.TenantResolver
 
 ---
 # ============ LOCAL-MEM — throwaway in-memory H2 (tests / clean demo) ============
@@ -109,5 +110,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        tenant_identifier_resolver: com.jobbot.config.TenantResolver
 
 

@@ -18,6 +18,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SkillEvidence {
+    @org.hibernate.annotations.TenantId
+    @jakarta.persistence.Column(name = "user_id")
+    private String userId;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

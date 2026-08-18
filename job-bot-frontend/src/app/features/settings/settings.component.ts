@@ -119,6 +119,14 @@ type Section = 'sources' | 'ai' | 'privacy';
             </div>
             <button class="btn danger small" (click)="reset()">Reset my data</button>
           </div>
+          
+          <div class="toggle-row danger-row">
+            <div>
+              <div class="tr-label">Delete account</div>
+              <div class="tr-desc">Permanently erase your entire account, configuration, and all data. You will be logged out. This cannot be undone.</div>
+            </div>
+            <button class="btn danger small" (click)="deleteAccount()">Delete account</button>
+          </div>
         </ng-container>
       </section>
     </div>
@@ -213,9 +221,20 @@ export class SettingsPageComponent implements OnInit {
     this.account.download(path, filename);
     this.toast.info('Preparing download…');
   }
+  private auth = inject(import('../../core/services/auth.service').AuthService);
+  private router = inject(import('@angular/router').Router);
+
   reset(): void {
     if (!confirm('Delete all your personal data? This cannot be undone.')) return;
     this.account.reset().subscribe(() => this.toast.success('Your data has been reset'));
+  }
+
+  deleteAccount(): void {
+    if (!confirm('Permanently delete your account and all data? This cannot be undone.')) return;
+    this.auth.deleteAccount().subscribe(() => {
+      this.toast.success('Your account has been deleted');
+      this.router.navigateByUrl('/login');
+    });
   }
 }
 

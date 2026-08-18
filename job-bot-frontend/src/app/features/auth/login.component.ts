@@ -13,18 +13,24 @@ import { ToastService } from '../../core/services/toast.service';
     <div style="max-width: 360px; margin: 8vh auto; padding: 24px;
                 background:#fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.06);">
       <h2 style="margin: 0 0 4px;">JobPilot</h2>
-      <div class="muted" style="margin-bottom: 20px;">Sign in to continue</div>
+      <div class="muted" style="margin-bottom: 20px; font-size: 13px;">Sign in, or enter a new username and password to create an account.</div>
 
       <label style="display:block; font-size:12px;">Username
         <input [(ngModel)]="username" style="width:100%; padding:8px;" autofocus />
       </label>
       <label style="display:block; font-size:12px; margin-top:10px;">Password
-        <input type="password" [(ngModel)]="password" style="width:100%; padding:8px;"
-               (keyup.enter)="submit()" />
+        <div style="position: relative;">
+          <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" style="width:100%; padding:8px; padding-right: 32px;"
+                 (keyup.enter)="submit()" />
+          <button type="button" (click)="showPassword = !showPassword"
+                  style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.6;">
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
       </label>
 
       <button class="btn" style="width:100%; margin-top:16px;" [disabled]="loading()" (click)="submit()">
-        {{ loading() ? 'Signing in…' : 'Sign in' }}
+        {{ loading() ? 'Please wait…' : 'Sign In / Register' }}
       </button>
     </div>
   `
@@ -34,8 +40,9 @@ export class LoginPageComponent {
   private router = inject(Router);
   private toast = inject(ToastService);
 
-  username = 'admin';
+  username = '';
   password = '';
+  showPassword = false;
   loading = signal(false);
 
   async submit(): Promise<void> {

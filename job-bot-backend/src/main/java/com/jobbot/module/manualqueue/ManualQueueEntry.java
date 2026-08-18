@@ -20,6 +20,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ManualQueueEntry {
+    @org.hibernate.annotations.TenantId
+    @jakarta.persistence.Column(name = "user_id")
+    private String userId;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
