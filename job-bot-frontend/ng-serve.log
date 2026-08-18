@@ -1,0 +1,1003 @@
+
+> job-bot-frontend@0.0.0 start
+> ng serve
+
+Node.js version v25.6.1 detected.
+Odd numbered Node.js versions will not enter LTS status and should not be used for production. For more information, please see https://nodejs.org/en/about/previous-releases/.
+- Building...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   35.20 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  144.74 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-4JCY6AUU.js   | discovery-component     |   32.72 kB | 
+chunk-4D2STE36.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-M4KUM55H.js   | dashboard-component     |   22.24 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-4ZNQXXI6.js   | job-list-component      |   14.05 kB | 
+chunk-PYXTOH5J.js   | analytics-component     |   12.99 kB | 
+chunk-BUQZDO4H.js   | criteria-form-component |   12.24 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-7QHY3CFM.js   | criteria-list-component |    6.87 kB | 
+chunk-MLFWUCI3.js   | resume-list-component   |    6.42 kB | 
+chunk-PN4G7U7Z.js   | login-component         |    4.61 kB | 
+...and 6 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [7.235 seconds]
+
+Watch mode enabled. Watching for file changes...
+  ➜  Local:   http://localhost:4200/
+  ➜  press h + enter to show help
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                  | Raw size
+main.js             | main                   | 35.50 kB | 
+
+Lazy chunk files    | Names                  | Raw size
+chunk-I6OTCIR7.js   | profile-component      | 30.63 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component | 26.70 kB | 
+
+Application bundle generation complete. [2.777 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 35.60 kB | 
+
+Application bundle generation complete. [0.451 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 35.89 kB | 
+
+Application bundle generation complete. [0.401 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 36.08 kB | 
+
+Application bundle generation complete. [0.293 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 36.08 kB | 
+
+Application bundle generation complete. [4.628 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 37.50 kB | 
+
+Application bundle generation complete. [0.530 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 37.54 kB | 
+
+Application bundle generation complete. [0.338 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 37.54 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-Z6EV3C4B.js   | discovery-component | 32.72 kB | 
+
+Application bundle generation complete. [0.671 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 36.21 kB | 
+chunk-V57GPKV2.js   | -                   |  1.47 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-5SORZQYA.js   | discovery-component | 32.86 kB | 
+
+Application bundle generation complete. [3.583 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 36.21 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-C4XEQPEO.js   | discovery-component | 32.90 kB | 
+
+Application bundle generation complete. [0.766 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 36.21 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-NNF4X6EY.js   | dashboard-component | 22.63 kB | 
+
+Application bundle generation complete. [0.708 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.376 seconds]
+
+X [ERROR] NG9: Property 'config' does not exist on type 'AnalyticsPageComponent'. [plugin angular-compiler]
+
+    src/app/features/analytics/analytics.component.ts:16:105:
+      16 │ ...v class="label">Matched (≥{{ config.thresholds().defaultMinMa...
+         ╵                               ~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   36.21 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  147.22 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-JNWGIQ7F.js   | discovery-component     |   32.90 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-4D2STE36.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-NNF4X6EY.js   | dashboard-component     |   22.63 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-4ZNQXXI6.js   | job-list-component      |   14.05 kB | 
+chunk-3D5BOUGW.js   | analytics-component     |   13.58 kB | 
+chunk-BUQZDO4H.js   | criteria-form-component |   12.24 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-7QHY3CFM.js   | criteria-list-component |    6.87 kB | 
+...and 8 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [0.378 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   | Raw size
+main.js             | main                    | 36.21 kB | 
+
+Lazy chunk files    | Names                   | Raw size
+chunk-GCMNWI4X.js   | job-import-component    | 25.59 kB | 
+chunk-WYIRT327.js   | job-list-component      | 14.05 kB | 
+chunk-V5QRUXJJ.js   | criteria-form-component | 12.24 kB | 
+chunk-LAZUDFU3.js   | criteria-list-component |  6.87 kB | 
+chunk-C6UCRFQS.js   | -                       |  1.25 kB | 
+
+Application bundle generation complete. [2.010 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+
+No output file changes.
+
+Application bundle generation complete. [1.079 seconds]
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.377 seconds]
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:61:46:
+      61 │ ...ass="bq-status" [class.ok]="bqValid === true" [class.bad]="bqVa...
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:61:77:
+      61 │ ...us" [class.ok]="bqValid === true" [class.bad]="bqValid === false">
+         ╵                                                   ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:15:
+      62 │             {{ bqValid === null ? '' : (bqValid ? '✓ valid' : '�...
+         ╵                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:40:
+      62 │ ...{{ bqValid === null ? '' : (bqValid ? '✓ valid' : '✕ ' + bq...
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG1: Property 'bqError' does not exist on type 'CriteriaFormComponent'. Did you mean 'error'? [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:69:
+      62 │ ...alid === null ? '' : (bqValid ? '✓ valid' : '✕ ' + bqError) }}
+         ╵                                                   ~~~~~~~
+
+
+X [ERROR] NG9: Property 'onQueryChange' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:65:69:
+      65 │ ..."model.booleanQuery || ''" (ngModelChange)="onQueryChange($event)"
+         ╵                                                ~~~~~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:68:57:
+      68 │ ...type="button" class="bq-chip" (click)="insert('AND')">AND</button>
+         ╵                                           ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:69:57:
+      69 │ ...n type="button" class="bq-chip" (click)="insert('OR')">OR</button>
+         ╵                                             ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:70:57:
+      70 │ ...type="button" class="bq-chip" (click)="insert('NOT')">NOT</button>
+         ╵                                           ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:71:57:
+      71 │ ...ton type="button" class="bq-chip" (click)="insert('(')">(</button>
+         ╵                                               ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:72:57:
+      72 │ ...ton type="button" class="bq-chip" (click)="insert(')')">)</button>
+         ╵                                               ~~~~~~
+
+
+X [ERROR] NG9: Property 'bqSample' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:30:
+      75 │           <input [(ngModel)]="bqSample" (ngModelChange)="onQueryCh...
+         ╵                               ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqSample' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:30:
+      75 │           <input [(ngModel)]="bqSample" (ngModelChange)="onQueryCh...
+         ╵                               ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'onQueryChange' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:57:
+      75 │ ...qSample" (ngModelChange)="onQueryChange(model.booleanQuery || '')"
+         ╵                              ~~~~~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:77:40:
+      77 │ ...      <span class="bq-match" *ngIf="bqValid && bqMatches !== null"
+         ╵                                        ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:77:51:
+      77 │ ...      <span class="bq-match" *ngIf="bqValid && bqMatches !== null"
+         ╵                                                   ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:78:29:
+      78 │                 [class.hit]="bqMatches" [class.miss]="!bqMatches">
+         ╵                              ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:78:55:
+      78 │                 [class.hit]="bqMatches" [class.miss]="!bqMatches">
+         ╵                                                        ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:79:15:
+      79 │             {{ bqMatches ? 'MATCH' : 'no match' }}
+         ╵                ~~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.400 seconds]
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:61:46:
+      61 │ ...ass="bq-status" [class.ok]="bqValid === true" [class.bad]="bqVa...
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:61:77:
+      61 │ ...us" [class.ok]="bqValid === true" [class.bad]="bqValid === false">
+         ╵                                                   ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:15:
+      62 │             {{ bqValid === null ? '' : (bqValid ? '✓ valid' : '�...
+         ╵                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:40:
+      62 │ ...{{ bqValid === null ? '' : (bqValid ? '✓ valid' : '✕ ' + bq...
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG1: Property 'bqError' does not exist on type 'CriteriaFormComponent'. Did you mean 'error'? [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:62:69:
+      62 │ ...alid === null ? '' : (bqValid ? '✓ valid' : '✕ ' + bqError) }}
+         ╵                                                   ~~~~~~~
+
+
+X [ERROR] NG9: Property 'onQueryChange' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:65:69:
+      65 │ ..."model.booleanQuery || ''" (ngModelChange)="onQueryChange($event)"
+         ╵                                                ~~~~~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:68:57:
+      68 │ ...type="button" class="bq-chip" (click)="insert('AND')">AND</button>
+         ╵                                           ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:69:57:
+      69 │ ...n type="button" class="bq-chip" (click)="insert('OR')">OR</button>
+         ╵                                             ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:70:57:
+      70 │ ...type="button" class="bq-chip" (click)="insert('NOT')">NOT</button>
+         ╵                                           ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:71:57:
+      71 │ ...ton type="button" class="bq-chip" (click)="insert('(')">(</button>
+         ╵                                               ~~~~~~
+
+
+X [ERROR] NG9: Property 'insert' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:72:57:
+      72 │ ...ton type="button" class="bq-chip" (click)="insert(')')">)</button>
+         ╵                                               ~~~~~~
+
+
+X [ERROR] NG9: Property 'bqSample' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:30:
+      75 │           <input [(ngModel)]="bqSample" (ngModelChange)="onQueryCh...
+         ╵                               ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqSample' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:30:
+      75 │           <input [(ngModel)]="bqSample" (ngModelChange)="onQueryCh...
+         ╵                               ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'onQueryChange' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:75:57:
+      75 │ ...qSample" (ngModelChange)="onQueryChange(model.booleanQuery || '')"
+         ╵                              ~~~~~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqValid' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:77:40:
+      77 │ ...      <span class="bq-match" *ngIf="bqValid && bqMatches !== null"
+         ╵                                        ~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:77:51:
+      77 │ ...      <span class="bq-match" *ngIf="bqValid && bqMatches !== null"
+         ╵                                                   ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:78:29:
+      78 │                 [class.hit]="bqMatches" [class.miss]="!bqMatches">
+         ╵                              ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:78:55:
+      78 │                 [class.hit]="bqMatches" [class.miss]="!bqMatches">
+         ╵                                                        ~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'bqMatches' does not exist on type 'CriteriaFormComponent'. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-form.component.ts:79:15:
+      79 │             {{ bqMatches ? 'MATCH' : 'no match' }}
+         ╵                ~~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   36.21 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  147.22 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-JNWGIQ7F.js   | discovery-component     |   32.90 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-GCMNWI4X.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-NNF4X6EY.js   | dashboard-component     |   22.63 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-3TDJPLSF.js   | criteria-form-component |   20.14 kB | 
+chunk-WYIRT327.js   | job-list-component      |   14.05 kB | 
+chunk-3D5BOUGW.js   | analytics-component     |   13.58 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-LAZUDFU3.js   | criteria-list-component |    6.87 kB | 
+...and 8 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [0.949 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   | Raw size
+main.js             | main                    | 36.21 kB | 
+
+Lazy chunk files    | Names                   | Raw size
+chunk-ITMNWMNI.js   | criteria-form-component | 20.33 kB | 
+
+Application bundle generation complete. [0.325 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 36.21 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-LKK4GEKQ.js   | dashboard-component | 22.63 kB | 
+
+Application bundle generation complete. [6.502 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [2.182 seconds]
+
+X [ERROR] NG9: Property 'activity' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:108:20:
+      108 │     <section *ngIf="activity().length">
+          ╵                     ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'activity' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:114:45:
+      114 │         <div class="tl-row" *ngFor="let a of activity()">
+          ╵                                              ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'toneFor' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:115:54:
+      115 │ ...an class="tl-mark" [class]="'tl-mark ' + toneFor(a.type)"></span>
+          ╵                                             ~~~~~~~
+
+
+X [ERROR] NG9: Property 'ago' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:120:35:
+      120 │           <span class="tl-time">{{ ago(a.createdAt) }}</span>
+          ╵                                    ~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   36.21 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  147.22 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-JNWGIQ7F.js   | discovery-component     |   32.90 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-GCMNWI4X.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-NNF4X6EY.js   | dashboard-component     |   22.63 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-ITMNWMNI.js   | criteria-form-component |   20.33 kB | 
+chunk-WYIRT327.js   | job-list-component      |   14.05 kB | 
+chunk-3D5BOUGW.js   | analytics-component     |   13.58 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-LAZUDFU3.js   | criteria-list-component |    6.87 kB | 
+...and 8 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [3.163 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [2.915 seconds]
+
+X [ERROR] NG9: Property 'activity' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:108:20:
+      108 │     <section *ngIf="activity().length">
+          ╵                     ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'activity' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:114:45:
+      114 │         <div class="tl-row" *ngFor="let a of activity()">
+          ╵                                              ~~~~~~~~
+
+
+X [ERROR] NG9: Property 'toneFor' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:115:54:
+      115 │ ...an class="tl-mark" [class]="'tl-mark ' + toneFor(a.type)"></span>
+          ╵                                             ~~~~~~~
+
+
+X [ERROR] NG9: Property 'ago' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:120:35:
+      120 │           <span class="tl-time">{{ ago(a.createdAt) }}</span>
+          ╵                                    ~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   36.21 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  147.22 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-JNWGIQ7F.js   | discovery-component     |   32.90 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-3RSMNC2P.js   | dashboard-component     |   27.69 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-GCMNWI4X.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-ITMNWMNI.js   | criteria-form-component |   20.33 kB | 
+chunk-WYIRT327.js   | job-list-component      |   14.05 kB | 
+chunk-3D5BOUGW.js   | analytics-component     |   13.58 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-LAZUDFU3.js   | criteria-list-component |    6.87 kB | 
+...and 8 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [1.960 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 36.21 kB | 
+
+Application bundle generation complete. [2.853 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.468 seconds]
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:34:31:
+      34 │           <ng-container *ngIf="results().length">
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:36:37:
+      36 │             <button *ngFor="let r of results()" class="cmd-item"
+         ╵                                      ~~~~~~~
+
+
+X [ERROR] NG9: Property 'openHit' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:37:29:
+      37 │                     (click)="openHit(r)">
+         ╵                              ~~~~~~~
+
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:52:63:
+      52 │ ...gIf="!filtered().length && !results().length">No matches for �...
+         ╵                                ~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.354 seconds]
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:34:31:
+      34 │           <ng-container *ngIf="results().length">
+         ╵                                ~~~~~~~
+
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:36:37:
+      36 │             <button *ngFor="let r of results()" class="cmd-item"
+         ╵                                      ~~~~~~~
+
+
+X [ERROR] NG9: Property 'openHit' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:37:29:
+      37 │                     (click)="openHit(r)">
+         ╵                              ~~~~~~~
+
+
+X [ERROR] NG9: Property 'results' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:52:63:
+      52 │ ...gIf="!filtered().length && !results().length">No matches for �...
+         ╵                                ~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.522 seconds]
+
+X [ERROR] NG9: Property 'openHit' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:37:29:
+      37 │                     (click)="openHit(r)">
+         ╵                              ~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.617 seconds]
+
+X [ERROR] NG9: Property 'openHit' does not exist on type 'CommandPaletteComponent'. [plugin angular-compiler]
+
+    src/app/shared/command-palette/command-palette.component.ts:37:29:
+      37 │                     (click)="openHit(r)">
+         ╵                              ~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   39.65 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  150.66 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-JNWGIQ7F.js   | discovery-component     |   32.90 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-3RSMNC2P.js   | dashboard-component     |   27.69 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-GCMNWI4X.js   | job-import-component    |   25.59 kB | 
+chunk-SFKADSIL.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-ITMNWMNI.js   | criteria-form-component |   20.33 kB | 
+chunk-WYIRT327.js   | job-list-component      |   14.05 kB | 
+chunk-3D5BOUGW.js   | analytics-component     |   13.58 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+chunk-W6BZTDVJ.js   | resume-form-component   |    8.78 kB | 
+chunk-LAZUDFU3.js   | criteria-list-component |    6.87 kB | 
+...and 8 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [1.036 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 39.68 kB | 
+
+Application bundle generation complete. [12.333 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 39.83 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-C4XEQPEO.js   | discovery-component | 32.90 kB | 
+chunk-V7IRQII5.js   | company-component   | 15.17 kB | 
+
+Application bundle generation complete. [8.697 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                | Raw size
+main.js             | main                 | 39.99 kB | 
+
+Lazy chunk files    | Names                | Raw size
+chunk-XNHY3XHP.js   | interviews-component | 21.38 kB | 
+
+Application bundle generation complete. [2.102 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 40.05 kB | 
+
+Application bundle generation complete. [0.942 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names | Raw size
+main.js             | main  | 40.15 kB | 
+
+Application bundle generation complete. [1.775 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 40.15 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-GIKV2KT6.js   | dashboard-component | 27.69 kB | 
+chunk-L6FB7BHN.js   | settings-component  | 25.49 kB | 
+chunk-T6QVOPC4.js   | analytics-component | 13.58 kB | 
+chunk-NRQGJMRV.js   | -                   |  1.53 kB | 
+
+Application bundle generation complete. [3.413 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [0.699 seconds]
+
+X [ERROR] NG9: Property 'momentum' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:96:30:
+      96 │       <div class="mom" *ngIf="momentum() as mo">
+         ╵                               ~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [1.878 seconds]
+
+X [ERROR] NG9: Property 'momentum' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:96:30:
+      96 │       <div class="mom" *ngIf="momentum() as mo">
+         ╵                               ~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Application bundle generation failed. [1.417 seconds]
+
+X [ERROR] NG9: Property 'momentum' does not exist on type 'DashboardComponent'. [plugin angular-compiler]
+
+    src/app/features/dashboard/dashboard.component.ts:96:30:
+      96 │       <div class="mom" *ngIf="momentum() as mo">
+         ╵                               ~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   40.15 kB | 
+styles.css          | styles                  |   12.88 kB | 
+chunk-SHIQEEPG.js   | -                       |    1.82 kB | 
+chunk-354W6YAL.js   | -                       |    1.59 kB | 
+chunk-Z253V6ZN.js   | -                       |    1.55 kB | 
+chunk-V57GPKV2.js   | -                       |    1.47 kB | 
+chunk-YRTSJ4HV.js   | -                       |    1.45 kB | 
+chunk-INI2NADZ.js   | -                       |    1.17 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+
+                    | Initial total           |  151.16 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-C4XEQPEO.js   | discovery-component     |   32.90 kB | 
+chunk-77IYVEDW.js   | dashboard-component     |   32.70 kB | 
+chunk-I6OTCIR7.js   | profile-component       |   30.63 kB | 
+chunk-ETFUAAGZ.js   | target-roles-component  |   26.70 kB | 
+chunk-GCMNWI4X.js   | job-import-component    |   25.59 kB | 
+chunk-L6FB7BHN.js   | settings-component      |   25.49 kB | 
+chunk-6AAPW3Y4.js   | kanban-component        |   25.28 kB | 
+chunk-JUBCYJEM.js   | queue-component         |   23.04 kB | 
+chunk-XNHY3XHP.js   | interviews-component    |   21.38 kB | 
+chunk-GMUXXCNH.js   | job-detail-component    |   20.65 kB | 
+chunk-ITMNWMNI.js   | criteria-form-component |   20.33 kB | 
+chunk-V7IRQII5.js   | company-component       |   15.17 kB | 
+chunk-WYIRT327.js   | job-list-component      |   14.05 kB | 
+chunk-T6QVOPC4.js   | analytics-component     |   13.58 kB | 
+chunk-6ZO737CA.js   | manual-queue-component  |   10.18 kB | 
+...and 10 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [3.171 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 40.15 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-JQ73WVBY.js   | dashboard-component | 32.80 kB | 
+
+Application bundle generation complete. [1.706 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names               | Raw size
+main.js             | main                | 40.15 kB | 
+
+Lazy chunk files    | Names               | Raw size
+chunk-JIDQ2BJY.js   | analytics-component | 25.17 kB | 
+
+Application bundle generation complete. [2.801 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                 | Raw size
+main.js             | main                  | 40.15 kB | 
+
+Lazy chunk files    | Names                 | Raw size
+chunk-H2EZNZOX.js   | resume-list-component | 11.23 kB | 
+
+Application bundle generation complete. [0.634 seconds]
+
+Page reload sent to client(s).
+- Changes detected. Rebuilding...
+
+Initial chunk files | Names                   | Raw size
+main.js             | main                    | 40.15 kB | 
+
+Lazy chunk files    | Names                   | Raw size
+chunk-R7DX75VT.js   | criteria-list-component | 10.70 kB | 
+
+Application bundle generation complete. [1.792 seconds]
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/criteria/criteria-list.component.ts:34:28:
+      34 │             {{ c.locations?.length ? c.locations.join(', ') : 'Any...
+         ╵                             ~~~~~~
+
+
+Page reload sent to client(s).

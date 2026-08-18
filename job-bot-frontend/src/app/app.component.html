@@ -1,0 +1,50 @@
+<ng-container *ngIf="isAuthed(); else loginShell">
+  <header class="topbar">
+    <div class="topbar-inner wrap">
+      <a class="wordmark" routerLink="/dashboard">
+        <span class="mark">JP</span>
+        <span class="name">JobPilot</span>
+      </a>
+
+      <nav class="mainnav" [class.open]="mobileOpen()">
+        <ng-container *ngFor="let cluster of clusters; let last = last">
+          <a *ngFor="let item of cluster.items"
+             [routerLink]="item.path"
+             routerLinkActive="active"
+             (click)="mobileOpen.set(false)"
+             class="navlink">
+            {{ item.label }}
+            <span *ngIf="item.badge && item.badge() > 0" class="badge">{{ item.badge() }}</span>
+          </a>
+          <span *ngIf="!last" class="cluster-sep" aria-hidden="true"></span>
+        </ng-container>
+      </nav>
+
+      <div class="topbar-actions">
+        <jp-getting-started></jp-getting-started>
+        <button class="cmdk" (click)="ui.openPalette()" title="Command palette (Ctrl K)">
+          <span>Search</span><kbd>⌘K</kbd>
+        </button>
+        <a class="btn small" routerLink="/discovery">Scan jobs</a>
+        <button class="iconbtn" (click)="logout()" title="Sign out" aria-label="Sign out">⏻</button>
+        <button class="iconbtn menu" (click)="mobileOpen.set(!mobileOpen())" aria-label="Menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="wrap">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <jp-command-palette></jp-command-palette>
+  <jp-welcome-modal></jp-welcome-modal>
+</ng-container>
+
+<ng-template #loginShell>
+  <router-outlet></router-outlet>
+</ng-template>
+
+<app-toast></app-toast>
+

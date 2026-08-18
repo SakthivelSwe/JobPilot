@@ -1,0 +1,40 @@
+Node.js version v25.6.1 detected.
+Odd numbered Node.js versions will not enter LTS status and should not be used for production. For more information, please see https://nodejs.org/en/about/previous-releases/.
+- Building...
+
+- Changes detected. Rebuilding...
+
+- Changes detected. Rebuilding...
+
+X [ERROR] NG9: Property 'generateAnswers' does not exist on type 'JobImportComponent'. [plugin angular-compiler]
+
+    src/app/features/jobs/job-import.component.ts:110:47:
+      110 │ ...n class="btn small" (click)="generateAnswers()">Generate</button>
+          ╵                                 ~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG9: Property 'answers' does not exist on type 'JobImportComponent'. [plugin angular-compiler]
+
+    src/app/features/jobs/job-import.component.ts:112:33:
+      112 │           <div *ngFor="let qa of answers" class="qa">
+          ╵                                  ~~~~~~~
+
+
+X [ERROR] NG9: Property 'answers' does not exist on type 'JobImportComponent'. [plugin angular-compiler]
+
+    src/app/features/jobs/job-import.component.ts:116:23:
+      116 │           <div *ngIf="!answers.length" class="muted" style="font-...
+          ╵                        ~~~~~~~
+
+
+- Changes detected. Rebuilding...
+
+X [ERROR] NG9: Property 'generateAnswers' does not exist on type 'JobImportComponent'. [plugin angular-compiler]
+
+    src/app/features/jobs/job-import.component.ts:110:47:
+      110 │ ...n class="btn small" (click)="generateAnswers()">Generate</button>
+          ╵                                 ~~~~~~~~~~~~~~~
+
+
+- Changes detected. Rebuilding...
+

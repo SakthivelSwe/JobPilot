@@ -1,0 +1,27 @@
+# Render Blueprint for JobPilot backend
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: job-bot-backend
+    runtime: java
+    plan: free
+    region: singapore
+    buildCommand: mvn -q clean package -DskipTests
+    startCommand: java -Xmx400m -Dspring.profiles.active=prod -jar target/job-bot-backend-0.0.1-SNAPSHOT.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SUPABASE_DB_URL
+        sync: false           # jdbc:postgresql://db.<proj>.supabase.co:5432/postgres
+      - key: SUPABASE_DB_USER
+        sync: false
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: AI_PROVIDER
+        value: noop           # noop | ollama | cloudflare
+      - key: CF_ACCOUNT_ID
+        sync: false
+      - key: CF_API_TOKEN
+        sync: false
+      - key: CF_MODEL
+        value: "@cf/meta/llama-3.1-8b-instruct"
+

@@ -1,0 +1,113 @@
+spring:
+  profiles:
+    active: local
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  ai:
+    # Pluggable AI provider: noop | ollama | cloudflare
+    provider: ${AI_PROVIDER:noop}
+    ollama:
+      url: ${OLLAMA_URL:http://localhost:11434}
+      model: ${OLLAMA_MODEL:llama3.1}
+    cloudflare:
+      account-id: ${CF_ACCOUNT_ID:}
+      api-token: ${CF_API_TOKEN:}
+      model: ${CF_MODEL:@cf/meta/llama-3.1-8b-instruct}
+  security:
+    jwt:
+      secret: ${JWT_SECRET:dev-secret-please-override-in-prod-must-be-at-least-32-bytes}
+      ttl-hours: ${JWT_TTL_HOURS:168}
+    admin:
+      username: ${ADMIN_USERNAME:admin}
+      # Default = bcrypt("changeme"). Generate a new one via POST /api/auth/hash.
+      password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$gH/.L3ULXaWW9j8u5k31j.PRRHdHGn.BmIvPOZnh9HvQR35fFQOAy}
+  discovery:
+    # Optional scheduled discovery of AUTHORIZED PUBLIC FEEDS only (spec §56). Off by default.
+    scan:
+      enabled: ${DISCOVERY_SCAN_ENABLED:false}
+      cron: ${DISCOVERY_SCAN_CRON:0 0 */6 * * *}
+  storage:
+    r2:
+      bucket-url: ${R2_BUCKET_URL:}
+      access-key: ${R2_ACCESS_KEY:}
+      secret-key: ${R2_SECRET_KEY:}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+---
+# ============ LOCAL (default) — file-based H2 (persists across restarts) ============
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:postgresql://aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require
+    username: postgres.cdigwphgihlaqylsrexh
+    password: Jobpilot@123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+---
+# ============ LOCAL-MEM — throwaway in-memory H2 (tests / clean demo) ============
+spring:
+  config:
+    activate:
+      on-profile: local-mem
+  datasource:
+    url: jdbc:h2:mem:jobpilot;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+
+---
+# ============ PROD — Neon PostgreSQL ============
+# Expected NEON_DATABASE_URL format:
+#   jdbc:postgresql://<host>.neon.tech/<db>?sslmode=require
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${NEON_DATABASE_URL}
+    username: ${NEON_DB_USER}
+    password: ${NEON_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+

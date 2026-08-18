@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>JobPilot Apply</title>
+    <style>
+      :root {
+        --void: #070611;
+        --card: #131225;
+        --border: rgba(124, 80, 255, 0.14);
+        --acc: #7c50ff;
+        --cyan: #00c8f0;
+        --green: #10d58c;
+        --red: #f43f5e;
+        --t1: #ede9ff;
+        --t2: #9190b0;
+        --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      }
+      body {
+        margin: 0;
+        padding: 14px 16px;
+        width: 300px;
+        background: var(--void);
+        color: var(--t1);
+        font-family: system-ui, sans-serif;
+        font-size: 13px;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+      .dot-ok  { background: var(--green); box-shadow: 0 0 8px var(--green); }
+      .dot-err { background: var(--red); }
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+      .num {
+        font-family: var(--mono);
+        font-size: 22px;
+        color: var(--acc);
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        color: var(--t2);
+        margin: 8px 0 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--t1);
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      button {
+        background: linear-gradient(135deg, var(--acc) 0%, var(--cyan) 100%);
+        color: white;
+        border: 0;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 8px;
+      }
+      button.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--t1);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      <span><span class="dot" id="status-dot"></span> JobPilot Apply</span>
+      <span style="font-size: 10px; color: var(--t2)">v2.0</span>
+    </h1>
+    <div class="stat">
+      <div class="num" id="today-count">0</div>
+      <div style="color: var(--t2); font-size: 11px">LinkedIn applies today</div>
+    </div>
+    <label for="api-base">Backend URL</label>
+    <input id="api-base" placeholder="http://localhost:8080" />
+    <label for="token">JWT token</label>
+    <input id="token" placeholder="paste from /api/auth/login" />
+    <button id="save">Save</button>
+    <button class="secondary" id="pause-toggle">Pause polling</button>
+    <button class="secondary" id="poll-now">Poll now</button>
+    <script src="popup.js"></script>
+  </body>
+</html>
+

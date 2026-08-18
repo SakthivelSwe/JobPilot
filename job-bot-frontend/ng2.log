@@ -1,0 +1,73 @@
+
+> job-bot-frontend@0.0.0 start
+> ng serve
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   11.81 kB | 
+styles.css          | styles                  |    4.69 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+chunk-SHAOKUVO.js   | -                       |  938 bytes | 
+
+                    | Initial total           |  106.48 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-ZITYXOXC.js   | job-import-component    |   22.45 kB | 
+chunk-A3LOEZ36.js   | kanban-component        |   17.42 kB | 
+chunk-JZUQ2Z6B.js   | dashboard-component     |   16.70 kB | 
+chunk-ABIEBJ7W.js   | job-list-component      |   14.05 kB | 
+chunk-THHQB265.js   | criteria-form-component |   12.24 kB | 
+chunk-FHWHLTXB.js   | resume-form-component   |    8.78 kB | 
+chunk-C7CP6LA4.js   | criteria-list-component |    6.87 kB | 
+chunk-FTTQ3B43.js   | resume-list-component   |    6.42 kB | 
+chunk-EZKMP3WR.js   | -                       |    1.65 kB | 
+chunk-7X6YTC6P.js   | -                       |    1.30 kB | 
+chunk-YRRAVGYH.js   | -                       |    1.16 kB | 
+chunk-M7IJF7UY.js   | -                       |    1.06 kB | 
+chunk-HDQS7BN7.js   | -                       |  984 bytes | 
+
+Application bundle generation complete. [19.224 seconds]
+
+Watch mode enabled. Watching for file changes...
+  ➜  Local:   http://localhost:4200/
+  ➜  press h + enter to show help
+Initial chunk files | Names                | Raw size
+main.js             | main                 | 11.81 kB | 
+
+Lazy chunk files    | Names                | Raw size
+chunk-IZH5EKQD.js   | job-import-component | 22.55 kB | 
+
+Application bundle generation complete. [0.955 seconds]
+
+Page reload sent to client(s).
+Application bundle generation failed. [0.713 seconds]
+
+Application bundle generation failed. [0.436 seconds]
+
+Initial chunk files | Names                   |   Raw size
+polyfills.js        | polyfills               |   88.09 kB | 
+main.js             | main                    |   11.81 kB | 
+styles.css          | styles                  |    4.69 kB | 
+chunk-W4QFBSP5.js   | -                       | 1008 bytes | 
+chunk-SHAOKUVO.js   | -                       |  938 bytes | 
+
+                    | Initial total           |  106.48 kB
+
+Lazy chunk files    | Names                   |   Raw size
+chunk-EZD3OVQ4.js   | job-import-component    |   25.59 kB | 
+chunk-A3LOEZ36.js   | kanban-component        |   17.42 kB | 
+chunk-JZUQ2Z6B.js   | dashboard-component     |   16.70 kB | 
+chunk-ABIEBJ7W.js   | job-list-component      |   14.05 kB | 
+chunk-THHQB265.js   | criteria-form-component |   12.24 kB | 
+chunk-FHWHLTXB.js   | resume-form-component   |    8.78 kB | 
+chunk-C7CP6LA4.js   | criteria-list-component |    6.87 kB | 
+chunk-FTTQ3B43.js   | resume-list-component   |    6.42 kB | 
+chunk-EZKMP3WR.js   | -                       |    1.65 kB | 
+chunk-7X6YTC6P.js   | -                       |    1.30 kB | 
+chunk-YRRAVGYH.js   | -                       |    1.16 kB | 
+chunk-M7IJF7UY.js   | -                       |    1.06 kB | 
+chunk-HDQS7BN7.js   | -                       |  984 bytes | 
+
+Application bundle generation complete. [0.488 seconds]
+
+Page reload sent to client(s).

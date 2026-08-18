@@ -1,0 +1,10 @@
+﻿Sakthi Kumar
+sakthi.kumar@example.com | +91 98765 43210 | Chennai
+
+Summary: Java backend engineer with 2.8 years building Spring Boot microservices.
+
+Experience
+Software Engineer at Acme Corp  Jan 2022 - Present
+Built REST APIs with Spring Boot, Kafka and AWS.
+
+Skills: Java, Spring Boot, Kafka, AWS, Angular, Kubernetes
