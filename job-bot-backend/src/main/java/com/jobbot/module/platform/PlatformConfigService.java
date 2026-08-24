@@ -21,9 +21,16 @@ public class PlatformConfigService {
 
     private final PlatformConfigRepository repository;
 
+    @Transactional
     public List<PlatformConfig> getAll() {
         String userId = com.jobbot.security.SecurityUtils.getCurrentUserId();
-        return repository.findAllForCurrentTenant(userId);
+        List<PlatformConfig> configs = repository.findAllForCurrentTenant(userId);
+        if (configs.isEmpty() && !"anonymousUser".equals(userId) && !"system".equals(userId)) {
+            log.info("No platform configs found for user {}, auto-seeding defaults.", userId);
+            seedDefaults();
+            configs = repository.findAllForCurrentTenant(userId);
+        }
+        return configs;
     }
 
     public PlatformConfig get(String platform) {
