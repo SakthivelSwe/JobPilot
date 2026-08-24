@@ -189,8 +189,9 @@ export class ProfilePageComponent implements OnInit {
         });
       },
       error: (err: any) => { 
+        console.error('Resume parsing failed:', err);
         this.parsing.set(false); 
-        const msg = err.error?.message || 'Could not parse that file - try another format.';
+        const msg = err.error?.message || (err.message ? err.message : 'Could not parse that file - try another format.');
         this.toast.error(msg); 
       },
     });
