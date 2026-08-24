@@ -1,12 +1,15 @@
 package com.jobbot.module.discovery;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import com.jobbot.module.platform.PlatformConfigService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ApplicationCapabilityServiceTest {
 
-    private final ApplicationCapabilityService service = new ApplicationCapabilityService();
+    private final PlatformConfigService platformConfigService = Mockito.mock(PlatformConfigService.class);
+    private final ApplicationCapabilityService service = new ApplicationCapabilityService(platformConfigService);
 
     @Test
     void naukriAndIndeedAreAssistedApply() {

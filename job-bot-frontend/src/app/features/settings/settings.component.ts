@@ -5,6 +5,9 @@ import { PlatformConfigService } from '../../core/services/platform-config.servi
 import { AiUsageService, AiUsage } from '../../core/services/analytics.service';
 import { AccountService } from '../../core/services/account.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
+import { PlatformSessionService, PlatformSession } from '../../core/services/platform-session.service';
 
 type Section = 'sources' | 'ai' | 'privacy';
 
@@ -56,6 +59,170 @@ type Section = 'sources' | 'ai' | 'privacy';
                 </label>
                 <button class="btn small" (click)="save(p)">Save</button>
               </div>
+
+              <!-- Account Session Card (Naukri / Indeed) -->
+              <div class="session-card" *ngIf="p.platformName !== 'LINKEDIN'">
+
+                <!-- Status row -->
+                <div class="session-row">
+                  <span class="session-dot"
+                    [class.dot-connected]="p.sessionStatus === 'CONNECTED'"
+                    [class.dot-expired]="p.sessionStatus === 'EXPIRED' || p.sessionStatus === 'ERROR'"
+                    [class.dot-disconnected]="!p.sessionStatus || p.sessionStatus === 'DISCONNECTED'">
+                  </span>
+                  <span class="session-label">
+                    <ng-container [ngSwitch]="p.sessionStatus">
+                      <span *ngSwitchCase="'CONNECTED'">Connected as <strong>{{ p.sessionUsername || 'your account' }}</strong></span>
+                      <span *ngSwitchCase="'EXPIRED'">&#9888; Session expired &mdash; reconnect to resume logged-in applies</span>
+                      <span *ngSwitchCase="'ERROR'">&#10007; Session error &mdash; try reconnecting</span>
+                      <span *ngSwitchDefault>Not connected &mdash; applies will be anonymous</span>
+                    </ng-container>
+                  </span>
+                  <div class="session-actions">
+                    <button class="btn secondary small"
+                      *ngIf="p.sessionStatus === 'CONNECTED'"
+                      [disabled]="sessionLoading()"
+                      (click)="validateSession(p.platformName)">&#10003; Validate</button>
+                    <button class="btn danger small"
+                      *ngIf="p.sessionStatus === 'CONNECTED'"
+                      [disabled]="sessionLoading()"
+                      (click)="disconnectSession(p.platformName)">Disconnect</button>
+                    <button class="btn accent small"
+                      *ngIf="p.sessionStatus !== 'CONNECTED'"
+                      [disabled]="sessionLoading()"
+                      (click)="connectSession(p.platformName)">
+                      <span *ngIf="!sessionLoading()">&#128279; Connect {{ p.platformName }} Account</span>
+                      <span *ngIf="sessionLoading()">&#9203; Opening browser&hellip;</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ── HOW TO CONNECT — Step-by-step (shown when NOT connected) ── -->
+                <div class="steps-block" *ngIf="p.sessionStatus !== 'CONNECTED'">
+                  <div class="steps-title">
+                    <span class="steps-icon">&#128196;</span>
+                    How to link your {{ p.platformName }} account
+                  </div>
+                  <ol class="steps-list">
+                    <li>
+                      <span class="step-num">1</span>
+                      <div class="step-body">
+                        <strong>Click &ldquo;Connect {{ p.platformName }} Account&rdquo;</strong>
+                        <span class="step-desc">A Chromium browser window will open on your screen automatically.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">2</span>
+                      <div class="step-body">
+                        <strong>Log in with your own credentials</strong>
+                        <span class="step-desc">
+                          Type your {{ p.platformName }} email and password <em>directly in that browser</em>.
+                          JobPilot never sees your password &mdash; it only waits for the login to complete.
+                        </span>
+                      </div>
+                    </li>
+                    <li *ngIf="p.platformName === 'NAUKRI'">
+                      <span class="step-num">3</span>
+                      <div class="step-body">
+                        <strong>Complete any OTP or CAPTCHA</strong>
+                        <span class="step-desc">If Naukri asks for an OTP on your phone or email, enter it. You have up to 3 minutes.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">{{ p.platformName === 'NAUKRI' ? 4 : 3 }}</span>
+                      <div class="step-body">
+                        <strong>Wait for the browser to close automatically</strong>
+                        <span class="step-desc">Once JobPilot detects a successful login, it saves your session (encrypted) and closes the browser. The status above will update to &ldquo;Connected&rdquo;.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">{{ p.platformName === 'NAUKRI' ? 5 : 4 }}</span>
+                      <div class="step-body">
+                        <strong>You&rsquo;re done &mdash; applies now use your real profile</strong>
+                        <span class="step-desc">Future job applications on {{ p.platformName }} will be submitted from your logged-in account, giving recruiters full access to your profile score and &ldquo;Active&rdquo; status.</span>
+                      </div>
+                    </li>
+                  </ol>
+                  <div class="steps-security">
+                    <span class="lock-icon">&#128274;</span>
+                    <div>
+                      <strong>Security:</strong> Your password is typed directly in the browser window &mdash; it is <strong>never</strong> captured or stored by JobPilot.
+                      Only an encrypted session cookie file is saved locally on <em>your machine</em>.
+                      Sessions typically last 30&ndash;90 days. You can disconnect any time.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── CONNECTED STATE — What happens now ── -->
+                <div class="steps-block connected-block" *ngIf="p.sessionStatus === 'CONNECTED'">
+                  <div class="steps-title connected-title">
+                    <span class="steps-icon">&#9989;</span>
+                    What happens now
+                  </div>
+                  <ul class="connected-list">
+                    <li>&#9679; Job discovery runs on the <strong>public search page</strong> (no login needed)</li>
+                    <li>&#9679; When a matching job is queued, the apply engine opens it <strong>logged in as you</strong></li>
+                    <li>&#9679; Recruiters see your <strong>full profile score</strong>, resume, and &ldquo;Active in last 30 days&rdquo; badge</li>
+                    <li>&#9679; Your application appears in <strong>{{ p.platformName }} &rarr; My Applications</strong></li>
+                    <li>&#9679; Session auto-checks on each apply; if expired you will be notified to reconnect</li>
+                  </ul>
+                  <div class="steps-security" style="margin-top:10px;">
+                    <span class="lock-icon">&#128274;</span>
+                    <div>No password stored. Session file is AES-256 encrypted and lives only on your machine.
+                    Click <strong>Validate</strong> to confirm the session is still active, or <strong>Disconnect</strong> to remove it.</div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- LinkedIn: Chrome Extension handles applies -->
+              <div class="session-card" *ngIf="p.platformName === 'LINKEDIN'">
+                <div class="session-row">
+                  <span class="session-dot dot-info"></span>
+                  <span class="session-label"><strong>LinkedIn &mdash; Chrome Extension applies</strong></span>
+                </div>
+                <div class="steps-block" style="margin-top:10px;">
+                  <div class="steps-title" style="margin-bottom:10px;">
+                    <span class="steps-icon">&#128279;</span>
+                    How LinkedIn applications work in JobPilot
+                  </div>
+                  <ol class="steps-list">
+                    <li>
+                      <span class="step-num">1</span>
+                      <div class="step-body">
+                        <strong>JobPilot discovers jobs from LinkedIn&rsquo;s public search</strong>
+                        <span class="step-desc">No login required for discovery. Jobs appear in your queue automatically.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">2</span>
+                      <div class="step-body">
+                        <strong>Install the JobPilot Chrome Extension</strong>
+                        <span class="step-desc">The extension runs inside your <em>own</em> Chrome browser where you are already logged into LinkedIn.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">3</span>
+                      <div class="step-body">
+                        <strong>Extension opens queued LinkedIn jobs and clicks &ldquo;Easy Apply&rdquo;</strong>
+                        <span class="step-desc">Because it runs inside your real browser session, LinkedIn sees it as a normal user action &mdash; not a bot.</span>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="step-num">4</span>
+                      <div class="step-body">
+                        <strong>Application is recorded in your JobPilot dashboard</strong>
+                        <span class="step-desc">Status updates to Applied and the job moves on your Kanban board.</span>
+                      </div>
+                    </li>
+                  </ol>
+                  <div class="steps-security">
+                    <span class="lock-icon">&#128274;</span>
+                    <div>LinkedIn credentials are never stored server-side. The Extension acts entirely within your own logged-in browser session.</div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
           <p class="panel-note">
@@ -154,6 +321,43 @@ type Section = 'sources' | 'ai' | 'privacy';
     .src-id { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
     .src-usage { font-size:12.5px; color:var(--ink-3); margin-left:auto; }
     .src-controls { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+    .session-card { margin-top:12px; padding:11px 14px; background:var(--surface-2,#f5f6fa); border-radius:var(--radius-sm,6px); border:1px solid var(--line); }
+    .session-row { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .session-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; background:var(--ink-4,#c4c4c4); transition:background .2s; }
+    .dot-connected { background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.18); }
+    .dot-expired { background:#f97316; box-shadow:0 0 0 3px rgba(249,115,22,.18); }
+    .dot-disconnected { background:var(--ink-4,#c4c4c4); }
+    .dot-info { background:#60a5fa; }
+    .session-label { font-size:13px; color:var(--ink-2); flex:1; min-width:0; }
+    .session-label strong { color:var(--ink); }
+    .session-actions { display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+    .session-hint { margin-top:8px; font-size:12px; color:var(--ink-3); line-height:1.5; }
+    .session-hint.connected { color:#16a34a; }
+    .btn.accent { background:var(--accent,#6366f1); color:#fff; border:1px solid var(--accent,#6366f1); }
+    .btn.accent:hover:not(:disabled) { opacity:.88; }
+
+    /* ── Steps block ── */
+    .steps-block { margin-top:14px; padding:14px 16px; background:var(--surface,#fff);
+      border:1px solid var(--line); border-radius:var(--radius-sm,6px); }
+    .connected-block { background:rgba(34,197,94,.05); border-color:rgba(34,197,94,.25); }
+    .steps-title { display:flex; align-items:center; gap:7px; font-weight:700; font-size:13px;
+      color:var(--ink); margin-bottom:14px; }
+    .connected-title { color:#15803d; }
+    .steps-icon { font-size:15px; }
+    .steps-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+    .steps-list li { display:flex; align-items:flex-start; gap:10px; }
+    .step-num { display:flex; align-items:center; justify-content:center; width:22px; height:22px;
+      min-width:22px; border-radius:50%; background:var(--accent,#6366f1); color:#fff;
+      font-size:11px; font-weight:700; line-height:1; margin-top:1px; }
+    .step-body { display:flex; flex-direction:column; gap:2px; }
+    .step-body strong { font-size:13px; color:var(--ink); font-weight:600; }
+    .step-desc { font-size:12px; color:var(--ink-3); line-height:1.55; }
+    .steps-security { display:flex; align-items:flex-start; gap:8px; margin-top:14px;
+      padding:10px 12px; background:rgba(99,102,241,.07); border-radius:var(--radius-sm,6px);
+      font-size:12px; color:var(--ink-2); line-height:1.55; }
+    .lock-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+    .connected-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+    .connected-list li { font-size:13px; color:var(--ink-2); }
     .switch { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2); font-weight:600; }
     .inline-num { display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--ink-3); font-weight:600; }
     .inline-num input { width:96px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
@@ -186,6 +390,7 @@ export class SettingsPageComponent implements OnInit {
   private aiUsage = inject(AiUsageService);
   private account = inject(AccountService);
   private toast = inject(ToastService);
+  private sessionSvc = inject(PlatformSessionService);
 
   section = signal<Section>('sources');
   navItems: { key: Section; label: string; desc: string }[] = [
@@ -197,10 +402,48 @@ export class SettingsPageComponent implements OnInit {
   platforms = signal<any[]>([]);
   ai = signal<AiUsage | null>(null);
   aiProvider = localStorage.getItem('jobpilot.aiProvider') ?? 'noop';
+  sessionLoading = signal(false);
 
   ngOnInit(): void {
     this.platform.list().subscribe({ next: list => this.platforms.set(list), error: () => {} });
     this.aiUsage.usage().subscribe({ next: u => this.ai.set(u), error: () => {} });
+  }
+
+  connectSession(platformName: string): void {
+    if (this.sessionLoading()) return;
+    this.sessionLoading.set(true);
+    this.toast.info(`Opening ${platformName} login window — please log in in the browser that appears.`);
+    this.sessionSvc.connect(platformName).subscribe({
+      next: (s) => { this.sessionLoading.set(false); this.patchSession(platformName, s); this.toast.success(`${platformName} connected as ${s.sessionUsername || 'your account'}!`); },
+      error: (err) => { this.sessionLoading.set(false); this.toast.error(`Failed to connect ${platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
+    });
+  }
+
+  disconnectSession(platformName: string): void {
+    this.sessionLoading.set(true);
+    this.sessionSvc.disconnect(platformName).subscribe({
+      next: (s) => { this.sessionLoading.set(false); this.patchSession(platformName, s); this.toast.info(`${platformName} account disconnected.`); },
+      error: () => this.sessionLoading.set(false)
+    });
+  }
+
+  validateSession(platformName: string): void {
+    this.sessionLoading.set(true);
+    this.sessionSvc.validate(platformName).subscribe({
+      next: (s) => {
+        this.sessionLoading.set(false); this.patchSession(platformName, s);
+        s.sessionActive ? this.toast.success(`${platformName} session is active.`) : this.toast.error(`${platformName} session expired. Please reconnect.`);
+      },
+      error: () => this.sessionLoading.set(false)
+    });
+  }
+
+  private patchSession(platformName: string, s: PlatformSession): void {
+    this.platforms.update(list => list.map(p =>
+      p.platformName === platformName
+        ? { ...p, sessionStatus: s.sessionStatus, sessionActive: s.sessionActive, sessionUsername: s.sessionUsername, sessionConnectedAt: s.sessionConnectedAt }
+        : p
+    ));
   }
 
   save(p: any): void {
@@ -221,8 +464,8 @@ export class SettingsPageComponent implements OnInit {
     this.account.download(path, filename);
     this.toast.info('Preparing download…');
   }
-  private auth = inject(import('../../core/services/auth.service').AuthService);
-  private router = inject(import('@angular/router').Router);
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
   reset(): void {
     if (!confirm('Delete all your personal data? This cannot be undone.')) return;

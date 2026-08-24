@@ -4,8 +4,12 @@ import com.jobbot.common.ApiResponse;
 import com.jobbot.common.exception.JobBotException;
 import com.jobbot.module.account.User;
 import com.jobbot.module.account.UserRepository;
+import com.jobbot.module.platform.PlatformConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +30,7 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final LoginRateLimiter rateLimiter;
     private final UserRepository userRepository;
+    private final PlatformConfigService platformConfigService;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public record LoginReq(String username, String password) {}
@@ -55,6 +60,8 @@ public class AuthController {
             user = new User(username, hash);
             user = userRepository.save(user);
             log.info("Created new user account: {}", username);
+            // Seed per-user platform configs (NAUKRI, LINKEDIN, INDEED) with the correct tenant.
+            seedPlatformsForUser(user.getId());
         } else {
             // Existing user: verify password
             user = existingUser.get();
@@ -62,6 +69,8 @@ public class AuthController {
                 rateLimiter.recordFailure(username);
                 throw new JobBotException("Invalid credentials");
             }
+            // Seed platform configs if the user somehow has none (e.g., pre-existing user)
+            seedPlatformsForUser(user.getId());
         }
 
         rateLimiter.reset(username);
@@ -92,6 +101,28 @@ public class AuthController {
                 jwtService.generateAccess(userId, List.of("USER")),
                 jwtService.generateRefresh(userId),
                 "Bearer");
+    }
+
+    /**
+     * Seeds the three default platform_config rows (NAUKRI, LINKEDIN, INDEED) scoped to
+     * the given userId. A temporary security context is established so that Hibernate's
+     * TenantResolver resolves to the correct user_id, not "system".
+     */
+    private void seedPlatformsForUser(String userId) {
+        var prev = SecurityContextHolder.getContext().getAuthentication();
+        try {
+            var auth = new UsernamePasswordAuthenticationToken(
+                    userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            log.info("seedPlatformsForUser: context set to userId={}, resolves to tenant={}",
+                    userId, SecurityUtils.getCurrentUserId());
+            platformConfigService.seedDefaults();
+            log.info("Seeded platform configs for new user: {}", userId);
+        } catch (Exception e) {
+            log.warn("Failed to seed platform configs for user {}: {}", userId, e.getMessage());
+        } finally {
+            SecurityContextHolder.getContext().setAuthentication(prev);
+        }
     }
 
     @PostMapping("/hash")

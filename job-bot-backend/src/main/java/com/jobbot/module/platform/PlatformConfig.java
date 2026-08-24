@@ -8,8 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "platform_config",
-        uniqueConstraints = @UniqueConstraint(columnNames = "platform_name"))
+@Table(name = "platform_config")
 @Getter
 @Setter
 @Builder
@@ -54,6 +53,43 @@ public class PlatformConfig {
     // NOTE (JobPilot v2.0, spec §1/§26): credential & session-cookie storage removed.
     // No LinkedIn/Naukri email, password, or session cookies are ever persisted.
     // This entity is now neutral per-source enablement / rate metadata (§57 Source Health).
+    // Session linking (v2.1): sessionFilePath stores a LOCAL path to an encrypted
+    // storageState file only. Raw cookie values are never persisted in the database.
+
+    /**
+     * Human-readable session status: DISCONNECTED | CONNECTED | EXPIRED | ERROR.
+     * Defaults to DISCONNECTED (no account linked).
+     */
+    @Column(name = "session_status", length = 20)
+    @Builder.Default
+    private String sessionStatus = "DISCONNECTED";
+
+    /**
+     * Whether the stored session file is currently valid (last confirmed reachable).
+     * Checked lazily on every apply attempt and eagerly on /validate.
+     */
+    @Column(name = "session_active")
+    @Builder.Default
+    private Boolean sessionActive = false;
+
+    /**
+     * Display-only: the username/email observed after login. Never used for auth.
+     * Shown in the Settings UI so the user can confirm which account is linked.
+     */
+    @Column(name = "session_username", length = 150)
+    private String sessionUsername;
+
+    /** When the session was last successfully connected / re-validated. */
+    @Column(name = "session_connected_at")
+    private OffsetDateTime sessionConnectedAt;
+
+    /**
+     * Absolute path to the encrypted Playwright storageState JSON file on the
+     * local machine. The file itself is AES-256 encrypted.
+     * This value is NEVER sent to the frontend.
+     */
+    @Column(name = "session_file_path", length = 512)
+    private String sessionFilePath;
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;

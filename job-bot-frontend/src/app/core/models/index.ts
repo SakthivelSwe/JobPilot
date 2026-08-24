@@ -181,8 +181,14 @@ export interface PlatformConfig {
   currentCountToday: number;
   lastResetDate?: string;
   paused: boolean;
-  naukriEmail?: string;
   createdAt?: string;
+  // Session linking fields (v2.1)
+  /** DISCONNECTED | CONNECTED | EXPIRED | ERROR */
+  sessionStatus?: string;
+  sessionActive?: boolean;
+  /** Display-only: the username/email of the linked account. */
+  sessionUsername?: string | null;
+  sessionConnectedAt?: string | null;
 }
 
 export interface DiscoveryRunResult {

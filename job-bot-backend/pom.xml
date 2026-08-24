@@ -69,6 +69,13 @@
             <version>1.17.2</version>
         </dependency>
 
+        <!-- Playwright for session-based browser automation (account linking + assisted apply) -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.44.0</version>
+        </dependency>
+
         <!-- Resume parsing: PDF (PDFBox) + DOC/DOCX (Apache POI) -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

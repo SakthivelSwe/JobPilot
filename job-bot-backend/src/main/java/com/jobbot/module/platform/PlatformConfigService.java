@@ -22,7 +22,8 @@ public class PlatformConfigService {
     private final PlatformConfigRepository repository;
 
     public List<PlatformConfig> getAll() {
-        return repository.findAll();
+        String userId = com.jobbot.security.SecurityUtils.getCurrentUserId();
+        return repository.findAllForCurrentTenant(userId);
     }
 
     public PlatformConfig get(String platform) {
@@ -89,6 +90,12 @@ public class PlatformConfigService {
     }
 
 
+    /** Generic save — used by PlatformSessionService to persist session state changes. */
+    @Transactional
+    public PlatformConfig saveConfig(PlatformConfig config) {
+        return repository.save(config);
+    }
+
     /** Called by DataSeeder / migrations on startup. */
     @Transactional
     public void seedDefaults() {
@@ -107,6 +114,8 @@ public class PlatformConfigService {
                 .currentCountToday(0)
                 .lastResetDate(LocalDate.now())
                 .paused(false)
+                .sessionStatus("DISCONNECTED")
+                .sessionActive(false)
                 .build());
         log.info("Seeded platform config: {}", name);
     }
