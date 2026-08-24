@@ -99,13 +99,6 @@
             <version>5.2.5</version>
         </dependency>
 
-        <!-- Local dev DB -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- Production DB (Supabase / Postgres) -->
         <dependency>
             <groupId>org.postgresql</groupId>
