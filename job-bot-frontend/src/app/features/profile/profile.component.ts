@@ -188,7 +188,11 @@ export class ProfilePageComponent implements OnInit {
           size: p.size, checksum: p.checksum, extractedText: p.rawTextPreview,
         });
       },
-      error: () => { this.parsing.set(false); this.toast.error('Could not parse that file — try another format.'); },
+      error: (err: any) => { 
+        this.parsing.set(false); 
+        const msg = err.error?.message || 'Could not parse that file - try another format.';
+        this.toast.error(msg); 
+      },
     });
   }
 

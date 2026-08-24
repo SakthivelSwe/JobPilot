@@ -31,6 +31,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(JobBotException.class)
     public ResponseEntity<ApiResponse<Object>> handleJobBot(JobBotException ex) {
+        log.warn("JobBotException: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
     }
 
