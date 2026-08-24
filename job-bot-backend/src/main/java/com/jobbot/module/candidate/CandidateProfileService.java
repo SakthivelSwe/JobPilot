@@ -74,7 +74,7 @@ public class CandidateProfileService {
         if (dto.excludedCompanies() != null) p.setExcludedCompanies(dto.excludedCompanies());
         p.setVerified(true);
 
-        // Replace child collections with the verified set.
+        if (p.getSkills() == null) p.setSkills(new java.util.ArrayList<>());
         p.getSkills().clear();
         if (dto.skills() != null) {
             for (var s : dto.skills()) {
@@ -94,6 +94,7 @@ public class CandidateProfileService {
             }
         }
 
+        if (p.getExperiences() == null) p.setExperiences(new java.util.ArrayList<>());
         p.getExperiences().clear();
         if (dto.experiences() != null) {
             for (var e : dto.experiences()) {
@@ -106,6 +107,7 @@ public class CandidateProfileService {
             }
         }
 
+        if (p.getProjects() == null) p.setProjects(new java.util.ArrayList<>());
         p.getProjects().clear();
         if (dto.projects() != null) {
             for (var pr : dto.projects()) {
@@ -116,6 +118,7 @@ public class CandidateProfileService {
             }
         }
 
+        if (p.getEducation() == null) p.setEducation(new java.util.ArrayList<>());
         p.getEducation().clear();
         if (dto.education() != null) {
             for (var ed : dto.education()) {
@@ -126,6 +129,7 @@ public class CandidateProfileService {
             }
         }
 
+        if (p.getCertifications() == null) p.setCertifications(new java.util.ArrayList<>());
         p.getCertifications().clear();
         if (dto.certifications() != null) {
             for (var c : dto.certifications()) {
@@ -136,6 +140,7 @@ public class CandidateProfileService {
             }
         }
 
+        if (p.getAchievements() == null) p.setAchievements(new java.util.ArrayList<>());
         p.getAchievements().clear();
         if (dto.achievements() != null) {
             for (String a : dto.achievements()) {

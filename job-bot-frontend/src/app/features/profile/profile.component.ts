@@ -67,7 +67,7 @@ import { ToastService } from '../../core/services/toast.service';
             <option value="ANY">Any</option><option value="REMOTE">Remote</option>
             <option value="HYBRID">Hybrid</option><option value="ONSITE">Onsite</option>
           </select></div>
-        <div class="field"><label>Work authorization</label><input [(ngModel)]="p.workAuthorization" /></div>
+        <div class="field"><label>Work authorization</label><input [(ngModel)]="p.workAuthorization" placeholder="e.g. Citizen, H-1B, Green Card" /></div>
       </div>
       <div class="field"><label>Preferred locations (comma-separated)</label>
         <input [ngModel]="join(p.preferredLocations)" (ngModelChange)="p.preferredLocations = split($event)"
