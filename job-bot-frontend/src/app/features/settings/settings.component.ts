@@ -151,6 +151,19 @@ type Section = 'sources' | 'ai' | 'privacy';
                       Sessions typically last 30&ndash;90 days. You can disconnect any time.
                     </div>
                   </div>
+
+                  <div class="steps-security" style="margin-top: 10px; background: rgba(0,0,0,0.03);">
+                    <div>
+                      <strong>Alternative: Provide cookie directly</strong><br/>
+                      <span class="step-desc" style="display:block; margin-top:4px;">
+                        If the browser does not open correctly, log in to {{ p.platformName }} in your normal browser, open Developer Tools (F12) > Application > Cookies, and copy the value of the <code>{{ p.platformName === 'NAUKRI' ? 'nauk_at' : 'CTK' }}</code> cookie.
+                      </span>
+                      <div style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="password" [(ngModel)]="p.manualCookie" placeholder="Paste cookie value here" style="flex:1; padding:6px 10px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);" />
+                        <button class="btn secondary small" (click)="connectManual(p)" [disabled]="!p.manualCookie || !!sessionLoading()">Save Cookie</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- ── CONNECTED STATE — What happens now ── -->
@@ -416,6 +429,15 @@ export class SettingsPageComponent implements OnInit {
     this.sessionSvc.connect(platformName).subscribe({
       next: (s) => { this.sessionLoading.set(null); this.patchSession(platformName, s); this.toast.success(`${platformName} connected as ${s.sessionUsername || 'your account'}!`); },
       error: (err) => { this.sessionLoading.set(null); this.toast.error(`Failed to connect ${platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
+    });
+  }
+
+  connectManual(p: any): void {
+    if (this.sessionLoading() || !p.manualCookie) return;
+    this.sessionLoading.set(p.platformName);
+    this.sessionSvc.connectManual(p.platformName, p.manualCookie).subscribe({
+      next: (s) => { this.sessionLoading.set(null); this.patchSession(p.platformName, s); p.manualCookie = ''; this.toast.success(`${p.platformName} connected via manual cookie!`); },
+      error: (err) => { this.sessionLoading.set(null); this.toast.error(`Failed to connect ${p.platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
     });
   }
 

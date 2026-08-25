@@ -125,6 +125,43 @@ public class PlatformSessionService {
     }
 
     /**
+     * Manages session by taking a raw cookie value provided manually by the user.
+     * This avoids needing to open a visible Playwright window on the backend.
+     */
+    public PlatformConfig saveManualCookie(String platform, String userId, String cookieValue) {
+        String upper = platform.toUpperCase();
+        String sessionCookie = sessionCookieName(upper);
+        String domain = "NAUKRI".equals(upper) ? ".naukri.com" : ".indeed.com";
+        Path sessionFile = sessionFilePath(userId, upper);
+
+        log.info("Saving manual cookie for {} (userId={})", upper, userId);
+
+        String storageStateJson = "{" +
+                "\"cookies\": [{" +
+                "\"name\": \"" + sessionCookie + "\"," +
+                "\"value\": \"" + cookieValue + "\"," +
+                "\"domain\": \"" + domain + "\"," +
+                "\"path\": \"/\"," +
+                "\"expires\": -1," +
+                "\"httpOnly\": false," +
+                "\"secure\": false," +
+                "\"sameSite\": \"None\"" +
+                "}]," +
+                "\"origins\": []" +
+                "}";
+
+        saveEncrypted(sessionFile, storageStateJson, userId);
+
+        PlatformConfig config = platformConfigService.get(upper);
+        config.setSessionStatus("CONNECTED");
+        config.setSessionActive(true);
+        config.setSessionUsername("Manual Login");
+        config.setSessionConnectedAt(OffsetDateTime.now());
+        config.setSessionFilePath(sessionFile.toAbsolutePath().toString());
+        return platformConfigService.saveConfig(config);
+    }
+
+    /**
      * Validates whether the stored session is still active by loading cookies and
      * making a lightweight authenticated page request.
      */

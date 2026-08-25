@@ -33,6 +33,17 @@ public class PlatformSessionController {
         return ApiResponse.ok(toDto(config), "Account connected for " + platform.toUpperCase());
     }
 
+    /**
+     * Connects an account by manually providing the session cookie value.
+     */
+    @PostMapping("/{platform}/session-cookie")
+    public ApiResponse<PlatformSessionDTO> connectManual(@PathVariable String platform, @RequestBody java.util.Map<String, String> body) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String cookieValue = body.get("cookieValue");
+        PlatformConfig config = sessionService.saveManualCookie(platform, userId, cookieValue);
+        return ApiResponse.ok(toDto(config), "Account connected via manual cookie for " + platform.toUpperCase());
+    }
+
     /** Returns the current session status without opening a browser. */
     @GetMapping("/{platform}/session")
     public ApiResponse<PlatformSessionDTO> session(@PathVariable String platform) {

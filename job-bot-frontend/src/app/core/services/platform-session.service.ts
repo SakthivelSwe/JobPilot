@@ -37,6 +37,12 @@ export class PlatformSessionService {
       .pipe(map(r => r.data));
   }
 
+  connectManual(platform: string, cookieValue: string): Observable<PlatformSession> {
+    return this.http
+      .post<ApiResponse<PlatformSession>>(`${this.base}/${platform}/session-cookie`, { cookieValue })
+      .pipe(map(r => r.data));
+  }
+
   validate(platform: string): Observable<PlatformSession> {
     return this.http
       .post<ApiResponse<PlatformSession>>(`${this.base}/${platform}/validate`, {})
