@@ -33,4 +33,5 @@ build/
 ### Env ###
 *.env
 .env
+data/
 

@@ -31,7 +31,7 @@ import { JobCriteria } from '../../core/models';
             <span class="chip" [class.green]="c.active" [class.gray]="!c.active">{{ c.active ? 'Active' : 'Off' }}</span>
           </div>
           <div class="cmeta">
-            {{ c.locations?.length ? c.locations.join(', ') : 'Any location' }} ·
+            {{ c.locations && c.locations.length ? c.locations.join(', ') : 'Any location' }} ·
             {{ c.experienceMin }}–{{ c.experienceMax }} yrs ·
             min match {{ c.minMatchScore }}
           </div>

@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { TargetRole, TargetRoleService } from '../../core/services/target-role.service';
+import { CandidateService } from '../../core/services/candidate.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
@@ -66,7 +68,12 @@ import { ToastService } from '../../core/services/toast.service';
 
     <!-- Editor -->
     <div class="panel editor" *ngIf="editing() as e">
-      <div class="section-head"><h2>{{ e.id ? 'Edit role' : 'New target role' }}</h2></div>
+      <div class="section-head" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>{{ e.id ? 'Edit role' : 'New target role' }}</h2>
+        <button *ngIf="!e.id" class="btn secondary small" (click)="autoFillFromProfile()" title="Auto-fill details from your resume/profile">
+          <span style="margin-right: 4px;">✨</span> Auto-fill from Profile
+        </button>
+      </div>
       <div class="grid cols-2">
         <div class="field"><label>Role title *</label>
           <input [(ngModel)]="e.roleTitle" placeholder="Java Backend Developer" /></div>
@@ -131,6 +138,7 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class TargetRolesPageComponent implements OnInit {
   private svc = inject(TargetRoleService);
+  private candidateService = inject(CandidateService);
   private toast = inject(ToastService);
 
   roles = signal<TargetRole[]>([]);
@@ -156,6 +164,67 @@ export class TargetRolesPageComponent implements OnInit {
       noticePeriodToleranceDays: null, active: true,
     });
   }
+
+  async autoFillFromProfile(): Promise<void> {
+    try {
+      const profile = await firstValueFrom(this.candidateService.getProfile());
+      if (profile) {
+        const e = this.editing();
+        if (!e) return;
+        
+        // Experience bracket
+        if (profile.yearsOfExperience != null) {
+          const exp = Math.floor(profile.yearsOfExperience);
+          e.minimumExperience = Math.max(0, exp - 1);
+          e.maximumExperience = exp + 2;
+        }
+
+        // Locations
+        if (profile.preferredLocations && profile.preferredLocations.length > 0) {
+          e.locations = [...profile.preferredLocations];
+        } else if (profile.currentLocation) {
+          e.locations = [profile.currentLocation];
+        }
+
+        // Remote preference
+        if (profile.remotePreference) {
+          e.remotePreference = profile.remotePreference;
+        }
+
+        // Salary expectations
+        if (profile.expectedSalary) e.salaryMinLpa = profile.expectedSalary;
+
+        // Skills (split top 5 to required, next 5 to preferred)
+        const skillsArray = (profile as any).skills || [];
+        if (skillsArray.length > 0) {
+          // Sort by proficiency/verification or just take the top ones which usually are the most mentioned
+          const sorted = skillsArray.map((s: any) => s.name);
+          if (e.requiredSkills.length === 0) {
+            e.requiredSkills = sorted.slice(0, 5);
+          }
+          if (e.preferredSkills.length === 0) {
+            e.preferredSkills = sorted.slice(5, 12);
+          }
+        }
+        
+        // Role Title
+        if (profile.targetRoles && profile.targetRoles.length > 0 && !e.roleTitle) {
+          e.roleTitle = profile.targetRoles[0];
+        } else if (!e.roleTitle && profile.name) {
+          // Fallback if they didn't specify targetRoles in profile
+          e.roleTitle = "Software Engineer"; 
+        }
+
+        this.editing.set({ ...e });
+        this.toast.success('Auto-filled details from your profile');
+      } else {
+        this.toast.info('No profile found. Please upload a résumé first in the Profile tab.');
+      }
+    } catch (err) {
+      this.toast.error('Failed to load profile for auto-fill');
+    }
+  }
+
   edit(r: TargetRole): void { this.editing.set({ ...r, requiredSkills: [...r.requiredSkills], preferredSkills: [...r.preferredSkills], excludedSkills: [...r.excludedSkills], locations: [...(r.locations || [])] }); }
   cancel(): void { this.editing.set(null); }
 

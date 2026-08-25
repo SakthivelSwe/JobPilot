@@ -2,8 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { CriteriaService } from '../../core/services/criteria.service';
 import { ResumeService } from '../../core/services/resume.service';
+import { CandidateService } from '../../core/services/candidate.service';
 import { ToastService } from '../../core/services/toast.service';
 import { JobCriteria, Resume } from '../../core/models';
 
@@ -12,8 +14,15 @@ import { JobCriteria, Resume } from '../../core/models';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page-title">{{ id ? 'Edit' : 'New' }} Criteria</div>
-    <div class="page-sub">Define what jobs to target and the minimum ATS score to shortlist</div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 24px; max-width:760px;">
+      <div>
+        <div class="page-title" style="margin-bottom:0">{{ id ? 'Edit' : 'New' }} Criteria</div>
+        <div class="page-sub" style="margin-bottom:0">Define what jobs to target and the minimum ATS score to shortlist</div>
+      </div>
+      <button *ngIf="!id" class="btn secondary small" (click)="autoFillFromProfile()" title="Auto-fill details from your resume/profile">
+        <span style="margin-right: 4px;">✨</span> Auto-fill from Profile
+      </button>
+    </div>
 
     <div class="card" style="max-width:760px;">
       <div class="field">
@@ -116,6 +125,7 @@ import { JobCriteria, Resume } from '../../core/models';
 export class CriteriaFormComponent implements OnInit {
   private service = inject(CriteriaService);
   private resumeService = inject(ResumeService);
+  private candidateService = inject(CandidateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toast = inject(ToastService);
@@ -148,6 +158,49 @@ export class CriteriaFormComponent implements OnInit {
         this.excludeText = (c.excludeCompanies || []).join(', ');
         if (c.booleanQuery) this.onQueryChange(c.booleanQuery);
       });
+    }
+  }
+
+  async autoFillFromProfile(): Promise<void> {
+    try {
+      const profile = await firstValueFrom(this.candidateService.getProfile());
+      if (profile) {
+        // Experience bracket
+        if (profile.yearsOfExperience != null) {
+          const exp = Math.floor(profile.yearsOfExperience);
+          this.model.experienceMin = Math.max(0, exp - 1);
+          this.model.experienceMax = exp + 2;
+        }
+
+        // Locations
+        if (profile.preferredLocations && profile.preferredLocations.length > 0) {
+          this.locationsText = profile.preferredLocations.join(', ');
+        } else if (profile.currentLocation) {
+          this.locationsText = profile.currentLocation;
+        }
+
+        // Keywords from skills
+        const skillsArray = (profile as any).skills || [];
+        if (skillsArray.length > 0) {
+          const sorted = skillsArray.map((s: any) => s.name);
+          if (!this.keywordsText) {
+            this.keywordsText = sorted.slice(0, 8).join(', ');
+          }
+        }
+        
+        // Name
+        if (profile.targetRoles && profile.targetRoles.length > 0 && !this.model.name) {
+          this.model.name = profile.targetRoles[0];
+        } else if (!this.model.name && profile.name) {
+          this.model.name = "Software Engineer Criteria"; 
+        }
+
+        this.toast.success('Auto-filled details from your profile');
+      } else {
+        this.toast.info('No profile found. Please upload a résumé first.');
+      }
+    } catch (err) {
+      this.toast.error('Failed to load profile for auto-fill');
     }
   }
 
