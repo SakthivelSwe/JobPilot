@@ -11,6 +11,13 @@ import java.util.UUID;
 
 public interface PlatformConfigRepository extends JpaRepository<PlatformConfig, UUID> {
 
+    /** Tenant-scoped lookup — matches platform name for the current user only. */
+    @Query("SELECT p FROM PlatformConfig p WHERE p.userId = :userId AND upper(p.platformName) = upper(:platformName)")
+    Optional<PlatformConfig> findByUserIdAndPlatformNameIgnoreCase(
+            @Param("userId") String userId,
+            @Param("platformName") String platformName);
+
+    /** Legacy (non-tenant) — kept for seeding logic that runs within a seeded security context. */
     Optional<PlatformConfig> findByPlatformNameIgnoreCase(String platformName);
 
     /** Explicit JPQL to ensure tenant (user_id) filtering is applied on list. */

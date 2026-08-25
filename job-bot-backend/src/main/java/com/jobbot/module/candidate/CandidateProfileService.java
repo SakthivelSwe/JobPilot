@@ -7,6 +7,7 @@ import com.jobbot.module.candidate.parse.ResumeExtractionService;
 import com.jobbot.module.candidate.parse.ResumeParser;
 import com.jobbot.module.candidate.parse.ResumeValidationService;
 import com.jobbot.module.storage.StorageService;
+import com.jobbot.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -168,16 +169,29 @@ public class CandidateProfileService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public Optional<CandidateProfile> currentProfile() {
-        // Single-user app: the most recently updated profile is "the" profile.
-        return profileRepo.findAll().stream()
-                .max((a, b) -> a.getUpdatedAt().compareTo(b.getUpdatedAt()));
+        // Tenant-scoped: only returns the current authenticated user's profile.
+        String userId = SecurityUtils.getCurrentUserId();
+        Optional<CandidateProfile> profile = profileRepo.findLatestByUserId(userId);
+        // Force-initialize all lazy collections while the session is still open.
+        profile.ifPresent(p -> {
+            p.getSkills().forEach(s -> s.getEvidence().size());
+            p.getExperiences().size();
+            p.getProjects().size();
+            p.getEducation().size();
+            p.getCertifications().size();
+            p.getAchievements().size();
+        });
+        return profile;
     }
 
+    @Transactional(readOnly = true)
     public CandidateProfile getOrThrow() {
         return currentProfile().orElseThrow(() -> new JobBotException("No candidate profile yet"));
     }
 
+    @Transactional(readOnly = true)
     public List<CandidateSkill> skills() {
         return getOrThrow().getSkills();
     }

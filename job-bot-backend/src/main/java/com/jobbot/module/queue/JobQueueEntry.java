@@ -19,7 +19,6 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "job_queue",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"external_id", "platform"}),
         indexes = {
                 @Index(name = "idx_queue_status", columnList = "status"),
                 @Index(name = "idx_queue_platform_status", columnList = "platform,status")
@@ -30,6 +29,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JobQueueEntry {
+
+    @org.hibernate.annotations.TenantId
+    @Column(name = "user_id")
+    private String userId;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

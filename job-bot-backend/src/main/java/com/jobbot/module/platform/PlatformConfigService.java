@@ -34,7 +34,8 @@ public class PlatformConfigService {
     }
 
     public PlatformConfig get(String platform) {
-        return repository.findByPlatformNameIgnoreCase(platform)
+        String userId = com.jobbot.security.SecurityUtils.getCurrentUserId();
+        return repository.findByUserIdAndPlatformNameIgnoreCase(userId, platform)
                 .orElseThrow(() -> new JobBotException("Unknown platform: " + platform));
     }
 

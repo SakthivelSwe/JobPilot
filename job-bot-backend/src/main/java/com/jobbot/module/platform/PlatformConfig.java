@@ -25,7 +25,7 @@ public class PlatformConfig {
     private UUID id;
 
     /** NAUKRI | LINKEDIN | INDEED */
-    @Column(name = "platform_name", nullable = false, unique = true, length = 50)
+    @Column(name = "platform_name", nullable = false, length = 50)
     private String platformName;
 
     @Builder.Default
