@@ -74,12 +74,29 @@ public class PlatformSessionService {
             page.navigate(loginUrl);
             log.info("Opened {} login page. Waiting for user to complete login (3 min)...", upper);
 
-            try {
-                page.waitForFunction(
-                        "() => document.cookie.includes('" + sessionCookie + "')",
-                        new Page.WaitForFunctionOptions().setTimeout(180_000)
-                );
-            } catch (PlaywrightException e) {
+            long startTime = System.currentTimeMillis();
+            boolean cookieFound = false;
+            while (System.currentTimeMillis() - startTime < 180_000) {
+                try {
+                    // Check if browser was closed by the user manually
+                    if (!context.pages().isEmpty() && context.pages().get(0).isClosed()) {
+                        break;
+                    }
+                    
+                    boolean hasCookie = context.cookies().stream()
+                            .anyMatch(c -> c.name.equals(sessionCookie));
+                    if (hasCookie) {
+                        cookieFound = true;
+                        break;
+                    }
+                    page.waitForTimeout(1000);
+                } catch (PlaywrightException e) {
+                    // Browser or page was closed, or context destroyed
+                    break;
+                }
+            }
+
+            if (!cookieFound) {
                 browser.close();
                 throw new JobBotException("Login timed out or was cancelled for " + upper + ". Please try again.");
             }
