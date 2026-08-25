@@ -55,13 +55,13 @@ import { ToastService } from '../../core/services/toast.service';
       <div class="section-head"><h2>Experience & availability</h2></div>
       <div class="grid cols-2">
         <div class="field"><label>Years of experience</label>
-          <input type="number" step="0.1" [(ngModel)]="p.yearsOfExperience" /></div>
+          <input type="number" min="0" step="0.1" [(ngModel)]="p.yearsOfExperience" /></div>
         <div class="field"><label>Notice period (days)</label>
-          <input type="number" [(ngModel)]="p.noticePeriodDays" /></div>
+          <input type="number" min="0" [(ngModel)]="p.noticePeriodDays" /></div>
         <div class="field"><label>Expected salary (LPA)</label>
-          <input type="number" [(ngModel)]="p.expectedSalary" /></div>
+          <input type="number" min="0" [(ngModel)]="p.expectedSalary" /></div>
         <div class="field"><label>Minimum salary (LPA)</label>
-          <input type="number" [(ngModel)]="p.minimumSalary" /></div>
+          <input type="number" min="0" [(ngModel)]="p.minimumSalary" /></div>
         <div class="field"><label>Remote preference</label>
           <select [(ngModel)]="p.remotePreference">
             <option value="ANY">Any</option><option value="REMOTE">Remote</option>
