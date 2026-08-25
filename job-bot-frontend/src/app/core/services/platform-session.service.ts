@@ -17,9 +17,11 @@ interface ApiResponse<T> {
   message: string;
 }
 
+import { environment } from '../../../environments/environment';
+
 @Injectable({ providedIn: 'root' })
 export class PlatformSessionService {
-  private base = '/api/platform-config';
+  private base = `${environment.apiUrl}/api/platform-config`;
 
   constructor(private http: HttpClient) {}
 
