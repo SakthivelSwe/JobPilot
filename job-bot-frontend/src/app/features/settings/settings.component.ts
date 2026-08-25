@@ -81,18 +81,18 @@ type Section = 'sources' | 'ai' | 'privacy';
                   <div class="session-actions">
                     <button class="btn secondary small"
                       *ngIf="p.sessionStatus === 'CONNECTED'"
-                      [disabled]="sessionLoading()"
+                      [disabled]="!!sessionLoading()"
                       (click)="validateSession(p.platformName)">&#10003; Validate</button>
                     <button class="btn danger small"
                       *ngIf="p.sessionStatus === 'CONNECTED'"
-                      [disabled]="sessionLoading()"
+                      [disabled]="!!sessionLoading()"
                       (click)="disconnectSession(p.platformName)">Disconnect</button>
                     <button class="btn accent small"
                       *ngIf="p.sessionStatus !== 'CONNECTED'"
-                      [disabled]="sessionLoading()"
+                      [disabled]="!!sessionLoading()"
                       (click)="connectSession(p.platformName)">
-                      <span *ngIf="!sessionLoading()">&#128279; Connect {{ p.platformName }} Account</span>
-                      <span *ngIf="sessionLoading()">&#9203; Opening browser&hellip;</span>
+                      <span *ngIf="sessionLoading() !== p.platformName">&#128279; Connect {{ p.platformName }} Account</span>
+                      <span *ngIf="sessionLoading() === p.platformName">&#9203; Opening browser&hellip;</span>
                     </button>
                   </div>
                 </div>
@@ -402,7 +402,7 @@ export class SettingsPageComponent implements OnInit {
   platforms = signal<any[]>([]);
   ai = signal<AiUsage | null>(null);
   aiProvider = localStorage.getItem('jobpilot.aiProvider') ?? 'noop';
-  sessionLoading = signal(false);
+  sessionLoading = signal<string | null>(null);
 
   ngOnInit(): void {
     this.platform.list().subscribe({ next: list => this.platforms.set(list), error: () => {} });
@@ -411,30 +411,30 @@ export class SettingsPageComponent implements OnInit {
 
   connectSession(platformName: string): void {
     if (this.sessionLoading()) return;
-    this.sessionLoading.set(true);
+    this.sessionLoading.set(platformName);
     this.toast.info(`Opening ${platformName} login window — please log in in the browser that appears.`);
     this.sessionSvc.connect(platformName).subscribe({
-      next: (s) => { this.sessionLoading.set(false); this.patchSession(platformName, s); this.toast.success(`${platformName} connected as ${s.sessionUsername || 'your account'}!`); },
-      error: (err) => { this.sessionLoading.set(false); this.toast.error(`Failed to connect ${platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
+      next: (s) => { this.sessionLoading.set(null); this.patchSession(platformName, s); this.toast.success(`${platformName} connected as ${s.sessionUsername || 'your account'}!`); },
+      error: (err) => { this.sessionLoading.set(null); this.toast.error(`Failed to connect ${platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
     });
   }
 
   disconnectSession(platformName: string): void {
-    this.sessionLoading.set(true);
+    this.sessionLoading.set(platformName);
     this.sessionSvc.disconnect(platformName).subscribe({
-      next: (s) => { this.sessionLoading.set(false); this.patchSession(platformName, s); this.toast.info(`${platformName} account disconnected.`); },
-      error: () => this.sessionLoading.set(false)
+      next: (s) => { this.sessionLoading.set(null); this.patchSession(platformName, s); this.toast.info(`${platformName} account disconnected.`); },
+      error: () => this.sessionLoading.set(null)
     });
   }
 
   validateSession(platformName: string): void {
-    this.sessionLoading.set(true);
+    this.sessionLoading.set(platformName);
     this.sessionSvc.validate(platformName).subscribe({
       next: (s) => {
-        this.sessionLoading.set(false); this.patchSession(platformName, s);
+        this.sessionLoading.set(null); this.patchSession(platformName, s);
         s.sessionActive ? this.toast.success(`${platformName} session is active.`) : this.toast.error(`${platformName} session expired. Please reconnect.`);
       },
-      error: () => this.sessionLoading.set(false)
+      error: () => this.sessionLoading.set(null)
     });
   }
 
