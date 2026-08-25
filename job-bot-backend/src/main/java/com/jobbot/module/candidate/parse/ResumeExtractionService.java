@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jobbot.module.ai.AiProvider;
 
 /**
  * Deterministic, offline extraction of structured fields from resume text (spec §5).
@@ -24,6 +27,8 @@ import java.util.regex.Pattern;
 public class ResumeExtractionService {
 
     private final SkillNormalizer skillNormalizer;
+    private final AiProvider aiProvider;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private static final Pattern EMAIL =
             Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
@@ -36,6 +41,75 @@ public class ResumeExtractionService {
     public ParsedResumeDTO extract(String fileName, String mimeType, long size, String checksum,
                                    String storagePath, String text) {
         String safe = text == null ? "" : text;
+        String preview = safe.length() > 1200 ? safe.substring(0, 1200) : safe;
+        
+        if (aiProvider.isAvailable()) {
+            try {
+                String json = aiProvider.extractResume(safe);
+                if (json != null) {
+                    JsonNode root = mapper.readTree(json);
+                    
+                    String name = root.path("name").asText(null);
+                    String email = root.path("email").asText(null);
+                    String phone = root.path("phone").asText(null);
+                    String summary = root.path("summary").asText(null);
+                    
+                    List<DetectedSkillDTO> skills = new ArrayList<>();
+                    if (root.path("skills").isArray()) {
+                        for (JsonNode sn : root.path("skills")) {
+                            List<String> evidence = new ArrayList<>();
+                            evidence.add("Detected by AI");
+                            skills.add(new DetectedSkillDTO(
+                                sn.path("name").asText(""), 
+                                sn.path("category").asText(null), 
+                                "UNKNOWN", 
+                                evidence));
+                        }
+                    }
+                    
+                    List<DetectedExperienceDTO> experience = new ArrayList<>();
+                    if (root.path("experience").isArray()) {
+                        for (JsonNode en : root.path("experience")) {
+                            List<String> techs = new ArrayList<>();
+                            if (en.path("technologies").isArray()) {
+                                en.path("technologies").forEach(t -> techs.add(t.asText()));
+                            }
+                            experience.add(new DetectedExperienceDTO(
+                                en.path("company").asText(null),
+                                en.path("role").asText(null),
+                                en.path("startDate").asText(null),
+                                en.path("endDate").asText(null),
+                                en.path("current").asBoolean(false),
+                                techs
+                            ));
+                        }
+                    }
+                    
+                    List<DetectedEducationDTO> education = new ArrayList<>();
+                    if (root.path("education").isArray()) {
+                        for (JsonNode edn : root.path("education")) {
+                            education.add(new DetectedEducationDTO(
+                                null, edn.path("degree").asText(null), null, null, null
+                            ));
+                        }
+                    }
+                    
+                    List<String> projects = new ArrayList<>();
+                    if (root.path("projects").isArray()) {
+                        root.path("projects").forEach(p -> projects.add(p.asText()));
+                    }
+                    
+                    log.info("Successfully extracted resume using Gemini AI");
+                    return new ParsedResumeDTO(
+                            fileName, mimeType, size, checksum, storagePath,
+                            name, email, phone, summary,
+                            skills, experience, education, projects, preview
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("AI extraction failed, falling back to regex: {}", e.getMessage());
+            }
+        }
 
         String email = firstMatch(EMAIL, safe);
         String phone = cleanPhone(firstMatch(PHONE, safe));
@@ -46,8 +120,6 @@ public class ResumeExtractionService {
         List<DetectedExperienceDTO> experience = detectExperience(safe);
         List<DetectedEducationDTO> education = detectEducation(safe);
         List<String> projects = detectProjects(safe);
-
-        String preview = safe.length() > 1200 ? safe.substring(0, 1200) : safe;
 
         return new ParsedResumeDTO(
                 fileName, mimeType, size, checksum, storagePath,

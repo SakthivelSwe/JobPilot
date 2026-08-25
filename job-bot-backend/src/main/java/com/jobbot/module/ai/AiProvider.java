@@ -14,5 +14,11 @@ public interface AiProvider {
      * Returns a short human-readable note, or null if unavailable.
      */
     String enrich(String resumeText, String jobDescription);
+
+    /**
+     * Extracts structured fields from raw resume text.
+     * Returns a JSON string matching the ParsedResumeDTO structure, or null if unavailable.
+     */
+    default String extractResume(String text) { return null; }
 }
 

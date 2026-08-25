@@ -12,8 +12,11 @@ spring:
 
 app:
   ai:
-    # Pluggable AI provider: noop | ollama | cloudflare
-    provider: ${AI_PROVIDER:noop}
+    # Pluggable AI provider: noop | ollama | cloudflare | gemini
+    provider: ${AI_PROVIDER:gemini}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-1.5-flash-latest}
     ollama:
       url: ${OLLAMA_URL:http://localhost:11434}
       model: ${OLLAMA_MODEL:llama3.1}

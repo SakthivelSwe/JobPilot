@@ -3,6 +3,7 @@ package com.jobbot.module.candidate;
 import com.jobbot.module.candidate.dto.ParsedResumeDTO;
 import com.jobbot.module.candidate.parse.ResumeExtractionService;
 import com.jobbot.module.candidate.parse.SkillNormalizer;
+import com.jobbot.module.ai.NoOpAiProvider;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ResumeExtractionServiceTest {
 
     private final SkillNormalizer normalizer = new SkillNormalizer();
-    private final ResumeExtractionService extraction = new ResumeExtractionService(normalizer);
+    private final ResumeExtractionService extraction = new ResumeExtractionService(normalizer, new NoOpAiProvider());
 
     private static final String SAMPLE = """
             Sakthi Kumar

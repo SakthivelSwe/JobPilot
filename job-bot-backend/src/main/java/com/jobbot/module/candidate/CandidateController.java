@@ -64,5 +64,10 @@ public class CandidateController {
     public ApiResponse<List<CandidateSkill>> skills() {
         return ApiResponse.ok(service.skills());
     }
+
+    @GetMapping("/resume/text")
+    public ApiResponse<String> getResumeText() {
+        return ApiResponse.ok(service.getLatestResumeText());
+    }
 }
 

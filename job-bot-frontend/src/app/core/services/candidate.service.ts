@@ -65,5 +65,6 @@ export class CandidateService {
   confirm(body: ConfirmProfile) { return this.api.post<CandidateProfile>('/api/candidate/profile/confirm', body); }
   update(body: ConfirmProfile) { return this.api.put<CandidateProfile>('/api/candidate/profile', body); }
   skills() { return this.api.get<any[]>('/api/candidate/skills'); }
+  getResumeText() { return this.api.get<string>('/api/candidate/resume/text'); }
 }
 

@@ -193,7 +193,17 @@ public class CandidateProfileService {
 
     @Transactional(readOnly = true)
     public List<CandidateSkill> skills() {
-        return getOrThrow().getSkills();
+        return getOrThrow().getSkills().stream()
+                .filter(CandidateSkill::isUserVerified)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public String getLatestResumeText() {
+        CandidateProfile p = getOrThrow();
+        List<ResumeSourceDocument> docs = docRepo.findByProfileId(p.getId());
+        if (docs.isEmpty()) return "";
+        return docs.get(docs.size() - 1).getExtractedText();
     }
 
     // --- helpers ---
