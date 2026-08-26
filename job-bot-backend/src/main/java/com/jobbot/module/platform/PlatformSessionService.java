@@ -224,7 +224,12 @@ public class PlatformSessionService {
                 "\"origins\": []" +
                 "}";
 
-        saveEncrypted(sessionFile, storageStateJson, userId);
+        try {
+            saveEncrypted(sessionFile, storageStateJson, userId);
+        } catch (Exception e) {
+            log.error("Failed to save manual cookie for {}", upper, e);
+            throw new JobBotException("Failed to save session cookie: " + e.getMessage());
+        }
 
         PlatformConfig config = platformConfigService.get(upper);
         config.setSessionStatus("CONNECTED");
