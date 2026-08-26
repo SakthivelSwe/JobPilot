@@ -163,7 +163,7 @@ export class ProfilePageComponent implements OnInit {
     this.svc.skills().subscribe({
       next: s => this.skills.set((s || []).map((x: any) => ({
         name: x.canonicalName || x.name, category: x.category,
-        proficiency: x.proficiency || 'UNKNOWN', evidence: x.evidence || [],
+        proficiency: x.proficiency || 'STRONG', evidence: x.evidence || [],
       }))),
       error: () => {},
     });
@@ -178,7 +178,7 @@ export class ProfilePageComponent implements OnInit {
         this.parsing.set(false);
         this.parsed.set(p);
         this.skills.set((p.detectedSkills || []).map(s => ({
-          name: s.name, category: s.category, proficiency: s.proficiency || 'UNKNOWN', evidence: s.evidence || [],
+          name: s.name, category: s.category, proficiency: s.proficiency || 'STRONG', evidence: s.evidence || [],
         })));
         this.editing.set({
           name: p.detectedName, email: p.detectedEmail, phone: p.detectedPhone,
@@ -208,7 +208,7 @@ export class ProfilePageComponent implements OnInit {
     this.editing.set({ ...p });
   }
 
-  addSkill(): void { this.skills.update(s => [...s, { name: '', proficiency: 'UNKNOWN', evidence: [] }]); }
+  addSkill(): void { this.skills.update(s => [...s, { name: '', proficiency: 'STRONG', evidence: [] }]); }
   removeSkill(i: number): void { this.skills.update(s => s.filter((_, idx) => idx !== i)); }
 
   save(): void {

@@ -62,7 +62,7 @@ public class ResumeExtractionService {
                             skills.add(new DetectedSkillDTO(
                                 sn.path("name").asText(""), 
                                 sn.path("category").asText(null), 
-                                "UNKNOWN", 
+                                "STRONG", 
                                 evidence));
                         }
                     }
@@ -132,10 +132,10 @@ public class ResumeExtractionService {
         var detected = skillNormalizer.detectInText(text);
         List<DetectedSkillDTO> out = new ArrayList<>();
         for (var e : detected.entrySet()) {
-            // Proficiency stays UNKNOWN — the user assigns real proficiency (spec §5/§6).
+            // Default to STRONG — the user can adjust proficiency after import.
             List<String> evidence = new ArrayList<>();
             evidence.add("Mentioned in resume");
-            out.add(new DetectedSkillDTO(e.getKey(), e.getValue(), "UNKNOWN", evidence));
+            out.add(new DetectedSkillDTO(e.getKey(), e.getValue(), "STRONG", evidence));
         }
         return out;
     }
