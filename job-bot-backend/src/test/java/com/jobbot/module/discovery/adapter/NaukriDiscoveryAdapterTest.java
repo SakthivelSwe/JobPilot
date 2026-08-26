@@ -1,5 +1,6 @@
 package com.jobbot.module.discovery.adapter;
 
+import com.jobbot.module.platform.PlatformSessionService;
 import com.jobbot.module.criteria.JobCriteria;
 import com.jobbot.module.role.TargetRole;
 import org.jsoup.Jsoup;
@@ -8,10 +9,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class NaukriDiscoveryAdapterTest {
 
-    private final NaukriDiscoveryAdapter adapter = new NaukriDiscoveryAdapter();
+    private final NaukriDiscoveryAdapter adapter =
+            new NaukriDiscoveryAdapter(mock(PlatformSessionService.class));
+
 
     @Test
     void parsesJobTupleCards() {
@@ -32,7 +36,7 @@ class NaukriDiscoveryAdapterTest {
                 </article>
                 </body></html>
                 """;
-        List<DiscoveredPosting> out = adapter.parse(Jsoup.parse(html, "https://www.naukri.com/"));
+        List<DiscoveredPosting> out = adapter.parseHtml(Jsoup.parse(html, "https://www.naukri.com/"));
         assertEquals(2, out.size());
         DiscoveredPosting first = out.get(0);
         assertEquals("Java Backend Engineer", first.title());
@@ -51,7 +55,7 @@ class NaukriDiscoveryAdapterTest {
                 </article>
                 </body></html>
                 """;
-        List<DiscoveredPosting> out = adapter.parse(Jsoup.parse(html, "https://www.naukri.com/"));
+        List<DiscoveredPosting> out = adapter.parseHtml(Jsoup.parse(html, "https://www.naukri.com/"));
         assertTrue(out.isEmpty());
     }
 

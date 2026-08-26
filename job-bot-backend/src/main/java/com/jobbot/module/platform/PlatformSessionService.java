@@ -50,6 +50,22 @@ public class PlatformSessionService {
     // --- Public API ----------------------------------------------------------
 
     /**
+     * Returns the raw decrypted cookie string stored for this platform+user,
+     * or null if no session exists. Used by discovery adapters to make
+     * authenticated API calls with the user's session.
+     */
+    public String loadSessionCookieString(String platform, String userId) {
+        Path file = sessionFilePath(userId, platform.toUpperCase());
+        if (!Files.exists(file)) return null;
+        try {
+            return loadDecrypted(file, userId);
+        } catch (Exception e) {
+            log.warn("Could not load session cookie for {} userId={}: {}", platform, userId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Opens a visible Playwright Chromium window navigated to the platform login page.
      * The user logs in manually. Once a successful session is detected (auth cookie present),
      * the session is saved to an encrypted local file and PlatformConfig is updated.
