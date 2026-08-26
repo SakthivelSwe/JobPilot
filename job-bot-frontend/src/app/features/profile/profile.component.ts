@@ -56,8 +56,19 @@ import { ToastService } from '../../core/services/toast.service';
       <div class="grid cols-2">
         <div class="field"><label>Years of experience</label>
           <input type="number" min="0" step="0.1" [(ngModel)]="p.yearsOfExperience" /></div>
-        <div class="field"><label>Notice period (days)</label>
-          <input type="number" min="0" [(ngModel)]="p.noticePeriodDays" /></div>
+        <div class="field">
+          <label>Notice period (days)</label>
+          <div class="flex" style="gap: 1rem; align-items: center;">
+            <input type="number" min="0" [(ngModel)]="p.noticePeriodDays" style="width: 100px;" [disabled]="p.noticePeriodDays === 0" />
+            <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.9rem; cursor: pointer;">
+              <input type="checkbox" 
+                     [checked]="p.noticePeriodDays === 0"
+                     (change)="$any($event.target).checked ? p.noticePeriodDays = 0 : p.noticePeriodDays = 30" 
+                     style="margin: 0; width: auto;" />
+              Immediate joiner
+            </label>
+          </div>
+        </div>
         <div class="field"><label>Expected salary (LPA)</label>
           <input type="number" min="0" [(ngModel)]="p.expectedSalary" /></div>
         <div class="field"><label>Minimum salary (LPA)</label>

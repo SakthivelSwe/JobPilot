@@ -62,7 +62,7 @@ import { ConfigService } from '../../core/config/thresholds';
             <label>Posted within</label>
             <div class="rail-toggles">
               <button *ngFor="let a of ageOptions" class="toggle"
-                      [class.on]="ageFilter() === a.days" (click)="ageFilter.set(ageFilter() === a.days ? null : a.days)">{{ a.label }}</button>
+                      [class.on]="ageFilter() === a.days" (click)="setAgeFilter(a.days)">{{ a.label }}</button>
             </div>
           </div>
           <button class="btn ghost small" (click)="clear()" *ngIf="dirty()">Clear filters</button>
@@ -281,6 +281,12 @@ export class DiscoveryPageComponent implements OnInit {
   dirty = computed(() => !!this.q() || this.minScore() > 0 || !!this.platform() || !!this.rec() || this.ageFilter() != null);
 
   clear(): void { this.q.set(''); this.minScore.set(0); this.platform.set(null); this.rec.set(null); this.ageFilter.set(null); this.reload(); }
+
+  setAgeFilter(days: number): void {
+    // Toggle: if same filter clicked, clear it; otherwise set it
+    this.ageFilter.set(this.ageFilter() === days ? null : days);
+    this.reload(); // Re-fetch from backend with the new date window
+  }
 
   scan(): void {
     this.scanning.set(true);

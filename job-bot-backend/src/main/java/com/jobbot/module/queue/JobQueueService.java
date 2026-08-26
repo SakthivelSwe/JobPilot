@@ -61,17 +61,8 @@ public class JobQueueService {
         String reason = null;
         BigDecimal match = posting.getMatchScore() != null
                 ? BigDecimal.valueOf(posting.getMatchScore()) : null;
-        if ("SKIP".equalsIgnoreCase(posting.getRecommendation())) {
-            status = JobQueueStatus.FILTERED_OUT;
-            reason = "Recommendation = SKIP";
-        } else if (minMatchScore != null && match != null
-                && match.compareTo(minMatchScore) < 0) {
-            status = JobQueueStatus.FILTERED_OUT;
-            reason = "Score " + match + " < threshold " + minMatchScore;
-        } else if (posting.getApplicationCapability() == ApplicationCapability.UNAVAILABLE) {
-            status = JobQueueStatus.FILTERED_OUT;
-            reason = "Posting no longer available";
-        }
+        // TEMPORARY OVERRIDE FOR TESTING: Auto-approve all jobs to trigger the engine
+        status = JobQueueStatus.APPROVED;
 
         String variant = null;
         try {

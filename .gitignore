@@ -1,0 +1,10 @@
+
+# Application engine sensitive config
+application-engine/.env
+application-engine/chrome-profile/
+application-engine/logs/
+
+# Temp scripts
+enqueue_all.js
+trigger.js
+job-bot-backend/naukri_dom.txt

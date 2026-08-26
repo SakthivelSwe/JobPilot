@@ -75,25 +75,37 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         String roleSlug = hyphenate(keyword);
 
         // Load the user's Naukri session cookie for authenticated requests
-        String sessionCookie = null;
+        String sessionCookieHeader = null;
         try {
             String userId = SecurityUtils.getCurrentUserId();
-            sessionCookie = sessionService.loadSessionCookieString("NAUKRI", userId);
-            if (sessionCookie != null) {
+            String rawJson = sessionService.loadSessionCookieString("NAUKRI", userId);
+            if (rawJson != null && !rawJson.isBlank()) {
+                JsonNode state = mapper.readTree(rawJson);
+                JsonNode cookies = state.path("cookies");
+                if (cookies.isArray()) {
+                    for (JsonNode c : cookies) {
+                        if ("nauk_at".equals(c.path("name").asText())) {
+                            sessionCookieHeader = "nauk_at=" + c.path("value").asText();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (sessionCookieHeader != null) {
                 log.info("Naukri scan: using authenticated session for userId={}", userId);
             } else {
-                log.info("Naukri scan: no session cookie found, proceeding unauthenticated");
+                log.info("Naukri scan: no valid nauk_at cookie found in session state, proceeding unauthenticated");
             }
         } catch (Exception e) {
-            log.debug("Could not load Naukri session: {}", e.getMessage());
+            log.debug("Could not parse Naukri session: {}", e.getMessage());
         }
 
         List<DiscoveredPosting> out = new ArrayList<>();
         for (int page = 1; page <= MAX_PAGES; page++) {
-            List<DiscoveredPosting> pageResults = tryApiPage(keyword, location, expMin, expMax, roleSlug, page, sessionCookie);
+            List<DiscoveredPosting> pageResults = tryApiPage(keyword, location, expMin, expMax, roleSlug, page, sessionCookieHeader);
             if (pageResults.isEmpty() && page == 1) {
                 log.warn("Naukri API returned 0 for '{}', trying HTML fallback", keyword);
-                pageResults = tryHtmlFallback(roleSlug, location, role, page, sessionCookie);
+                pageResults = tryHtmlFallback(roleSlug, location, role, page, sessionCookieHeader);
             }
             log.info("Naukri page {}: {} jobs for role '{}'", page, pageResults.size(), keyword);
             out.addAll(pageResults);
@@ -188,20 +200,46 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
             String roleSlug, String location, TargetRole role, int page, String sessionCookie) {
         List<DiscoveredPosting> out = new ArrayList<>();
         String url = buildSearchUrl(roleSlug, location, role, page);
-        try {
-            var conn = Jsoup.connect(url)
-                    .userAgent(UA)
-                    .header("Accept-Language", "en-IN,en;q=0.9")
-                    .timeout(15_000)
-                    .followRedirects(true)
-                    .ignoreHttpErrors(true);
-            if (sessionCookie != null && !sessionCookie.isBlank()) {
-                conn.header("Cookie", sessionCookie);
+        try (com.microsoft.playwright.Playwright playwright = com.microsoft.playwright.Playwright.create()) {
+            com.microsoft.playwright.Browser browser = playwright.chromium().launch(
+                    new com.microsoft.playwright.BrowserType.LaunchOptions().setHeadless(false)
+            );
+            
+            com.microsoft.playwright.BrowserContext context;
+            String userId = SecurityUtils.getCurrentUserId();
+            String rawJson = sessionService.loadSessionCookieString("NAUKRI", userId);
+            if (rawJson != null && !rawJson.isBlank()) {
+                java.nio.file.Path tempState = java.nio.file.Files.createTempFile("naukri_state", ".json");
+                java.nio.file.Files.writeString(tempState, rawJson);
+                context = browser.newContext(
+                    new com.microsoft.playwright.Browser.NewContextOptions()
+                        .setUserAgent(UA)
+                        .setStorageStatePath(tempState)
+                );
+                java.nio.file.Files.deleteIfExists(tempState);
+            } else {
+                context = browser.newContext(
+                    new com.microsoft.playwright.Browser.NewContextOptions().setUserAgent(UA)
+                );
             }
-            Document doc = conn.get();
+            
+            com.microsoft.playwright.Page p = context.newPage();
+            log.info("Naukri fallback: Navigating to {} via Playwright", url);
+            p.navigate(url);
+            
+            // Wait for job cards to render or timeout after 15 seconds
+            try {
+                p.waitForSelector("div.srp-jobtuple-wrapper, .cust-job-tuple", 
+                        new com.microsoft.playwright.Page.WaitForSelectorOptions().setTimeout(15_000));
+            } catch (Exception e) {
+                log.warn("Naukri Playwright: timeout waiting for job tuples. Proceeding anyway.");
+            }
+            
+            Document doc = Jsoup.parse(p.content());
             out.addAll(parseHtml(doc));
-        } catch (IOException e) {
-            log.warn("Naukri HTML fallback failed for '{}' page {}: {}", roleSlug, page, e.getMessage());
+            browser.close();
+        } catch (Exception e) {
+            log.warn("Naukri Playwright fallback failed for '{}' page {}: {}", roleSlug, page, e.getMessage());
         }
         return out;
     }
