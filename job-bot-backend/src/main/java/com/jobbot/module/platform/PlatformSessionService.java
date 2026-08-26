@@ -125,38 +125,71 @@ public class PlatformSessionService {
     }
 
     /**
-     * Performs a headless login using credentials.
-     * WARNING: Fails if Captcha or OTP is requested.
+     * Performs an automated login using credentials by opening a visible browser window.
+     * Naukri blocks headless Chromium via bot-detection — a visible browser with a realistic
+     * user-agent is required. Will fail if Naukri requests a Captcha or OTP.
      */
     public PlatformConfig loginWithCredentials(String platform, String userId, String email, String password) {
         String upper = platform.toUpperCase();
-        String loginUrl = loginUrl(upper);
         String sessionCookie = sessionCookieName(upper);
         Path sessionFile = sessionFilePath(userId, upper);
 
-        log.info("Starting headless credential login for {} (userId={})", upper, userId);
+        log.info("Starting automated credential login for {} (userId={})", upper, userId);
 
         try (Playwright playwright = Playwright.create()) {
             BrowserType chromium = playwright.chromium();
-            Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(true));
-            BrowserContext context = browser.newContext();
+            // Must use non-headless: Naukri's Akamai bot-detection blocks headless Chromium
+            Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+                    .setHeadless(false)
+                    .setArgs(List.of(
+                            "--disable-blink-features=AutomationControlled",
+                            "--no-sandbox"
+                    )));
+
+            BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                            "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                            "Chrome/124.0.0.0 Safari/537.36")
+                    .setViewportSize(1280, 800)
+                    .setLocale("en-IN")
+            );
+
+            // Hide the webdriver property that Naukri detects
+            context.addInitScript("Object.defineProperty(navigator, 'webdriver', { get: () => undefined })");
+
             Page page = context.newPage();
-            page.navigate(loginUrl);
-            
+            log.info("Navigating to Naukri login page...");
+            page.navigate(loginUrl(upper));
+
             if ("NAUKRI".equals(upper)) {
-                page.waitForSelector("#usernameField");
-                page.fill("#usernameField", email);
-                page.fill("#passwordField", password);
-                page.click("button[type='submit']");
+                // Wait up to 60 seconds for the login form to appear
+                page.waitForSelector("#usernameField",
+                        new Page.WaitForSelectorOptions().setTimeout(60_000));
+
+                // Human-like typing with delay between keystrokes
+                page.locator("#usernameField").click();
+                page.waitForTimeout(300);
+                page.locator("#usernameField").fill(email);
+                page.waitForTimeout(500);
+
+                page.locator("#passwordField").click();
+                page.waitForTimeout(300);
+                page.locator("#passwordField").fill(password);
+                page.waitForTimeout(500);
+
+                // Click the Login button (class-based selector, more robust than type='submit')
+                page.locator("button.blue-btn").click();
+                log.info("Submitted Naukri login form — waiting for session cookie...");
+
             } else if ("INDEED".equals(upper)) {
-                // Not supported for Indeed yet, but keeping structure
+                browser.close();
                 throw new JobBotException("Automated credential login is not yet supported for INDEED.");
             }
 
+            // Poll up to 60 seconds for the auth session cookie
             long startTime = System.currentTimeMillis();
             boolean cookieFound = false;
-            // Wait up to 30 seconds for the session cookie
-            while (System.currentTimeMillis() - startTime < 30_000) {
+            while (System.currentTimeMillis() - startTime < 60_000) {
                 try {
                     boolean hasCookie = context.cookies().stream()
                             .anyMatch(c -> c.name.equals(sessionCookie));
@@ -164,7 +197,7 @@ public class PlatformSessionService {
                         cookieFound = true;
                         break;
                     }
-                    page.waitForTimeout(1000);
+                    page.waitForTimeout(1500);
                 } catch (PlaywrightException e) {
                     break;
                 }
@@ -172,13 +205,21 @@ public class PlatformSessionService {
 
             if (!cookieFound) {
                 browser.close();
-                throw new JobBotException("Login failed. Naukri may have requested a Captcha or OTP. Please use the Manual Cookie method.");
+                throw new JobBotException(
+                        "Login failed — Naukri may have shown a Captcha or OTP challenge. " +
+                        "Please use the 'Paste Cookie' method instead: log in via your normal browser, " +
+                        "open DevTools → Application → Cookies and copy the value of 'nauk_at'.");
             }
 
             String fetchedUsername = extractUsername(page, upper);
-            log.info("Headless login detected for {} — username: {}", upper, fetchedUsername);
+            log.info("Automated login successful for {} — username: {}", upper, fetchedUsername);
             String storageStateJson = context.storageState();
-            saveEncrypted(sessionFile, storageStateJson, userId);
+            try {
+                saveEncrypted(sessionFile, storageStateJson, userId);
+            } catch (Exception e) {
+                log.error("Failed to save session for {}", upper, e);
+                throw new JobBotException("Failed to save session cookie: " + e.getMessage());
+            }
             browser.close();
 
             PlatformConfig config = platformConfigService.get(upper);
@@ -192,11 +233,12 @@ public class PlatformSessionService {
         } catch (JobBotException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to perform headless login for {}: {}", upper, e.getMessage(), e);
+            log.error("Failed to perform automated login for {}: {}", upper, e.getMessage(), e);
             markError(platform);
             throw new JobBotException("Automated login failed: " + e.getMessage());
         }
     }
+
 
     /**
      * Manages session by taking a raw cookie value provided manually by the user.
