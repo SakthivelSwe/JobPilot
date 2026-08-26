@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { ToastComponent } from './shared/toast/toast.component';
 import { CommandPaletteComponent } from './shared/command-palette/command-palette.component';
 import { WelcomeModalComponent } from './shared/welcome-modal/welcome-modal.component';
@@ -65,6 +66,14 @@ export class AppComponent implements OnInit {
       this.onboarding.refresh();
     }
     setInterval(() => { if (this.isAuthed()) this.refreshBadges(); }, 30_000);
+
+    // Refresh onboarding checklist on every route navigation so the
+    // counter updates automatically after the user completes a step.
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe(() => {
+      if (this.isAuthed()) this.onboarding.refresh();
+    });
   }
 
   refreshBadges(): void {
