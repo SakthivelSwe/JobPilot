@@ -75,8 +75,8 @@ import { ToastService } from '../../core/services/toast.service';
         </button>
       </div>
       <div class="grid cols-2">
-        <div class="field"><label>Role title *</label>
-          <input [(ngModel)]="e.roleTitle" placeholder="Java Backend Developer" /></div>
+        <div class="field"><label>Role title * <span style="font-weight:400;color:var(--ink-3);">(comma-separate to add multiple)</span></label>
+          <input [(ngModel)]="e.roleTitle" placeholder="Software Engineer, Java Developer" /></div>
         <div class="field"><label>Priority (1 = highest)</label>
           <input type="number" min="1" [(ngModel)]="e.priority" /></div>
       </div>
@@ -231,11 +231,40 @@ export class TargetRolesPageComponent implements OnInit {
   save(): void {
     const e = this.editing();
     if (!e || !e.roleTitle) return;
-    const op = e.id ? this.svc.update(e.id, e) : this.svc.create(e);
-    op.subscribe({
-      next: () => { this.toast.success(e.id ? 'Role updated' : 'Role created'); this.editing.set(null); this.load(); },
-      error: () => this.toast.error('Could not save the role'),
-    });
+
+    // Support comma-separated titles — create one role per title with shared settings.
+    const titles = e.roleTitle.split(',').map((t: string) => t.trim()).filter(Boolean);
+
+    if (titles.length <= 1 && e.id) {
+      // Single title edit of existing role — normal update
+      const op = this.svc.update(e.id, e);
+      op.subscribe({
+        next: () => { this.toast.success('Role updated'); this.editing.set(null); this.load(); },
+        error: () => this.toast.error('Could not save the role'),
+      });
+      return;
+    }
+
+    if (titles.length > 1) {
+      // Multiple titles — create one role per title with the same settings
+      let basePriority = this.roles().length + 1;
+      const requests = titles.map((title: string, i: number) =>
+        this.svc.create({ ...e, id: undefined, roleTitle: title, priority: basePriority + i })
+      );
+      Promise.all(requests.map((r: any) => r.toPromise()))
+        .then(() => {
+          this.toast.success(`${titles.length} roles created`);
+          this.editing.set(null);
+          this.load();
+        })
+        .catch(() => this.toast.error('Could not save one or more roles'));
+    } else {
+      // Single title, new role
+      this.svc.create({ ...e, roleTitle: titles[0] }).subscribe({
+        next: () => { this.toast.success('Role created'); this.editing.set(null); this.load(); },
+        error: () => this.toast.error('Could not save the role'),
+      });
+    }
   }
   remove(r: TargetRole): void {
     if (!r.id || !confirm(`Delete "${r.roleTitle}"?`)) return;
