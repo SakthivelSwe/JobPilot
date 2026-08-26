@@ -44,6 +44,18 @@ public class PlatformSessionController {
         return ApiResponse.ok(toDto(config), "Account connected via manual cookie for " + platform.toUpperCase());
     }
 
+    /**
+     * Connects an account using email and password via headless automation.
+     */
+    @PostMapping("/{platform}/login-credentials")
+    public ApiResponse<PlatformSessionDTO> loginCredentials(@PathVariable String platform, @RequestBody java.util.Map<String, String> body) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String email = body.get("email");
+        String password = body.get("password");
+        PlatformConfig config = sessionService.loginWithCredentials(platform, userId, email, password);
+        return ApiResponse.ok(toDto(config), "Account connected via credentials for " + platform.toUpperCase());
+    }
+
     /** Returns the current session status without opening a browser. */
     @GetMapping("/{platform}/session")
     public ApiResponse<PlatformSessionDTO> session(@PathVariable String platform) {

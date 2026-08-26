@@ -164,6 +164,21 @@ type Section = 'sources' | 'ai' | 'privacy';
                       </div>
                     </div>
                   </div>
+
+                  <div class="steps-security" style="margin-top: 10px; background: rgba(0,0,0,0.03);">
+                    <div>
+                      <strong>Alternative: Login directly (Automated)</strong><br/>
+                      <span class="step-desc" style="display:block; margin-top:4px;">
+                        Provide your credentials and JobPilot will attempt an invisible headless login. <br/>
+                        <em>Warning: This will fail if NAUKRI asks for a Captcha or OTP.</em>
+                      </span>
+                      <div style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="email" [(ngModel)]="p.loginEmail" placeholder="Email" style="flex:1; padding:6px 10px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);" />
+                        <input type="password" [(ngModel)]="p.loginPassword" placeholder="Password" style="flex:1; padding:6px 10px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);" />
+                        <button class="btn secondary small" (click)="loginCredentials(p)" [disabled]="!p.loginEmail || !p.loginPassword || !!sessionLoading()">Login</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- ── CONNECTED STATE — What happens now ── -->
@@ -438,6 +453,23 @@ export class SettingsPageComponent implements OnInit {
     this.sessionSvc.connectManual(p.platformName, p.manualCookie).subscribe({
       next: (s) => { this.sessionLoading.set(null); this.patchSession(p.platformName, s); p.manualCookie = ''; this.toast.success(`${p.platformName} connected via manual cookie!`); },
       error: (err) => { this.sessionLoading.set(null); this.toast.error(`Failed to connect ${p.platformName}: ${err?.error?.message ?? 'Unknown error'}`); }
+    });
+  }
+
+  loginCredentials(p: any): void {
+    if (this.sessionLoading() || !p.loginEmail || !p.loginPassword) return;
+    this.sessionLoading.set(p.platformName);
+    this.sessionSvc.loginWithCredentials(p.platformName, p.loginEmail, p.loginPassword).subscribe({
+      next: (s) => { 
+        this.sessionLoading.set(null); 
+        this.patchSession(p.platformName, s); 
+        p.loginEmail = ''; p.loginPassword = ''; 
+        this.toast.success(`${p.platformName} connected automatically!`); 
+      },
+      error: (err) => { 
+        this.sessionLoading.set(null); 
+        this.toast.error(`Headless Login Failed: ${err?.error?.message ?? 'Unknown error'}`); 
+      }
     });
   }
 

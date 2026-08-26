@@ -125,6 +125,80 @@ public class PlatformSessionService {
     }
 
     /**
+     * Performs a headless login using credentials.
+     * WARNING: Fails if Captcha or OTP is requested.
+     */
+    public PlatformConfig loginWithCredentials(String platform, String userId, String email, String password) {
+        String upper = platform.toUpperCase();
+        String loginUrl = loginUrl(upper);
+        String sessionCookie = sessionCookieName(upper);
+        Path sessionFile = sessionFilePath(userId, upper);
+
+        log.info("Starting headless credential login for {} (userId={})", upper, userId);
+
+        try (Playwright playwright = Playwright.create()) {
+            BrowserType chromium = playwright.chromium();
+            Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(true));
+            BrowserContext context = browser.newContext();
+            Page page = context.newPage();
+            page.navigate(loginUrl);
+            
+            if ("NAUKRI".equals(upper)) {
+                page.waitForSelector("#usernameField");
+                page.fill("#usernameField", email);
+                page.fill("#passwordField", password);
+                page.click("button[type='submit']");
+            } else if ("INDEED".equals(upper)) {
+                // Not supported for Indeed yet, but keeping structure
+                throw new JobBotException("Automated credential login is not yet supported for INDEED.");
+            }
+
+            long startTime = System.currentTimeMillis();
+            boolean cookieFound = false;
+            // Wait up to 30 seconds for the session cookie
+            while (System.currentTimeMillis() - startTime < 30_000) {
+                try {
+                    boolean hasCookie = context.cookies().stream()
+                            .anyMatch(c -> c.name.equals(sessionCookie));
+                    if (hasCookie) {
+                        cookieFound = true;
+                        break;
+                    }
+                    page.waitForTimeout(1000);
+                } catch (PlaywrightException e) {
+                    break;
+                }
+            }
+
+            if (!cookieFound) {
+                browser.close();
+                throw new JobBotException("Login failed. Naukri may have requested a Captcha or OTP. Please use the Manual Cookie method.");
+            }
+
+            String fetchedUsername = extractUsername(page, upper);
+            log.info("Headless login detected for {} — username: {}", upper, fetchedUsername);
+            String storageStateJson = context.storageState();
+            saveEncrypted(sessionFile, storageStateJson, userId);
+            browser.close();
+
+            PlatformConfig config = platformConfigService.get(upper);
+            config.setSessionStatus("CONNECTED");
+            config.setSessionActive(true);
+            config.setSessionUsername(fetchedUsername);
+            config.setSessionConnectedAt(OffsetDateTime.now());
+            config.setSessionFilePath(sessionFile.toAbsolutePath().toString());
+            return platformConfigService.saveConfig(config);
+
+        } catch (JobBotException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to perform headless login for {}: {}", upper, e.getMessage(), e);
+            markError(platform);
+            throw new JobBotException("Automated login failed: " + e.getMessage());
+        }
+    }
+
+    /**
      * Manages session by taking a raw cookie value provided manually by the user.
      * This avoids needing to open a visible Playwright window on the backend.
      */

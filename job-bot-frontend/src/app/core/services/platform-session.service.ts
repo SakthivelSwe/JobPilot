@@ -43,6 +43,12 @@ export class PlatformSessionService {
       .pipe(map(r => r.data));
   }
 
+  loginWithCredentials(platform: string, email: string, password: string): Observable<PlatformSession> {
+    return this.http
+      .post<ApiResponse<PlatformSession>>(`${this.base}/${platform}/login-credentials`, { email, password })
+      .pipe(map(r => r.data));
+  }
+
   validate(platform: string): Observable<PlatformSession> {
     return this.http
       .post<ApiResponse<PlatformSession>>(`${this.base}/${platform}/validate`, {})
