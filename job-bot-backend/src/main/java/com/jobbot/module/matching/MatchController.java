@@ -39,21 +39,28 @@ public class MatchController {
     /**
      * Top opportunities: score the most recent {@code scanSize} postings and return the
      * best {@code limit} by overall score (spec §32 "New matches today").
+     * Optional {@code maxAgeDays} limits results to postings discovered within N days.
      */
     @GetMapping("/top")
     public ApiResponse<List<RankedMatch>> top(
             @RequestParam(defaultValue = "20") int limit,
-            @RequestParam(defaultValue = "200") int scanSize) {
+            @RequestParam(defaultValue = "200") int scanSize,
+            @RequestParam(required = false) Integer maxAgeDays) {
         CandidateProfile profile = profileService.getOrThrow();
         var page = postingRepository.findAll(
                 PageRequest.of(0, Math.min(scanSize, 500), Sort.by(Sort.Direction.DESC, "createdAt")));
+        java.time.OffsetDateTime cutoff = maxAgeDays != null
+                ? java.time.OffsetDateTime.now().minusDays(maxAgeDays)
+                : null;
         List<RankedMatch> ranked = page.getContent().stream()
+                .filter(p -> cutoff == null || (p.getCreatedAt() != null && p.getCreatedAt().isAfter(cutoff)))
                 .map(p -> new RankedMatch(p, matchService.match(profile, p)))
                 .sorted(Comparator.comparingInt((RankedMatch r) -> r.match().overallScore()).reversed())
                 .limit(Math.max(1, limit))
                 .toList();
         return ApiResponse.ok(ranked);
     }
+
 
     /**
      * Recompute and persist match score + recommendation for stored postings

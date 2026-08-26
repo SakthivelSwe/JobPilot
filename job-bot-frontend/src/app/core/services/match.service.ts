@@ -20,6 +20,7 @@ export interface JobPosting {
   matchScore?: number;
   recommendation?: string;
   status?: string;
+  createdAt?: string;
 }
 
 export interface MatchResult {
@@ -48,8 +49,10 @@ export interface RankedMatch {
 export class MatchService {
   private api = inject(ApiService);
 
-  top(limit = 20, scanSize = 200) {
-    return this.api.get<RankedMatch[]>('/api/match/top', { limit, scanSize });
+  top(limit = 20, scanSize = 200, maxAgeDays?: number) {
+    const params: any = { limit, scanSize };
+    if (maxAgeDays != null) params['maxAgeDays'] = maxAgeDays;
+    return this.api.get<RankedMatch[]>('/api/match/top', params);
   }
   posting(id: string) { return this.api.get<RankedMatch>(`/api/match/posting/${id}`); }
   rescore(max = 1000) { return this.api.post<{ rescored: number }>(`/api/match/rescore?max=${max}`, {}); }

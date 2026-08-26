@@ -3,6 +3,7 @@ package com.jobbot.module.discovery.adapter;
 import com.jobbot.module.criteria.JobCriteria;
 import com.jobbot.module.discovery.AtsType;
 import com.jobbot.module.role.TargetRole;
+import com.microsoft.playwright.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,7 +11,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -20,14 +20,13 @@ import java.util.Locale;
 /**
  * Naukri.com search-based discovery adapter.
  *
- * <p>Uses Jsoup to fetch the public search-results HTML page (no auth). Card
- * selectors are Naukri's public 2026 layout (also fall back to earlier selectors
- * for robustness).
+ * <p>Naukri migrated to Next.js (CSR) in 2025 — plain HTTP fetchers (Jsoup) only
+ * receive the loading shell. We use Playwright (headless Chromium) to execute
+ * JavaScript and wait for the job cards to render before scraping the DOM.
  *
- * <p>Politeness rules baked in:
- *  - Randomised 2–3.5 s sleep between page requests
- *  - Honest User-Agent (no evasion)
- *  - 10 s connect + read timeout
+ * <p>Politeness rules:
+ *  - Randomised 2–3 s sleep between page requests
+ *  - Realistic User-Agent + webdriver masking
  *  - Hard cap of 3 pages per role
  */
 @Component
@@ -35,10 +34,9 @@ import java.util.Locale;
 public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
 
     private static final int MAX_PAGES = 3;
-    private static final int TIMEOUT_MS = 10_000;
     private static final String UA =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    + "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
     @Override
     public AtsType type() {
@@ -51,53 +49,97 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         String roleSlug = hyphenate(role.getRoleTitle());
         List<DiscoveredPosting> out = new ArrayList<>();
 
-        for (int page = 1; page <= MAX_PAGES; page++) {
-            String url = buildSearchUrl(roleSlug, location, role, page);
-            try {
-                Document doc = fetch(url);
-                List<DiscoveredPosting> cards = parse(doc);
-                out.addAll(cards);
-                if (cards.isEmpty()) break; // no more pages
-                politeSleep(page);
-            } catch (IOException e) {
-                log.warn("Naukri fetch failed for '{}' page {}: {}", roleSlug, page, e.getMessage());
-                break;
+        try (Playwright playwright = Playwright.create()) {
+            Browser browser = playwright.chromium().launch(
+                    new BrowserType.LaunchOptions()
+                            .setHeadless(true)
+                            .setArgs(List.of(
+                                    "--no-sandbox",
+                                    "--disable-dev-shm-usage",
+                                    "--disable-blink-features=AutomationControlled")));
+
+            BrowserContext context = browser.newContext(
+                    new Browser.NewContextOptions()
+                            .setUserAgent(UA)
+                            .setViewportSize(1280, 900)
+                            .setLocale("en-IN"));
+
+            // Mask automation signals
+            context.addInitScript(
+                    "Object.defineProperty(navigator,'webdriver',{get:()=>undefined})");
+
+            Page page = context.newPage();
+
+            for (int pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
+                String url = buildSearchUrl(roleSlug, location, role, pageNum);
+                log.info("Naukri scan: fetching page {} → {}", pageNum, url);
+                try {
+                    page.navigate(url, new Page.NavigateOptions().setTimeout(30_000));
+
+                    // Wait for job cards to render after Next.js hydration
+                    page.waitForSelector(
+                            "article.jobTuple, div.srp-jobtuple-wrapper, " +
+                            "div[data-job-id], div.job-tuple-wrapper, " +
+                            ".cust-job-tuple",
+                            new Page.WaitForSelectorOptions().setTimeout(20_000));
+
+                    String html = page.content();
+                    Document doc = Jsoup.parse(html);
+                    List<DiscoveredPosting> cards = parse(doc);
+                    log.info("Naukri page {}: found {} jobs for role '{}'", pageNum, cards.size(), roleSlug);
+                    out.addAll(cards);
+                    if (cards.isEmpty()) break;
+                    politeSleep();
+                } catch (PlaywrightException e) {
+                    log.warn("Naukri Playwright fetch failed for '{}' page {}: {}", roleSlug, pageNum, e.getMessage());
+                    break;
+                }
             }
+
+            browser.close();
+        } catch (Exception e) {
+            log.error("Naukri discovery error for role '{}': {}", roleSlug, e.getMessage());
         }
         return out;
     }
 
-    // -------- helpers --------
-
-    Document fetch(String url) throws IOException {
-        return Jsoup.connect(url)
-                .userAgent(UA)
-                .header("Accept-Language", "en-IN,en;q=0.9")
-                .timeout(TIMEOUT_MS)
-                .followRedirects(true)
-                .ignoreHttpErrors(true)
-                .get();
-    }
-
-    /** Public for unit-testing offline HTML fixtures. */
+    /** Public for unit-testing with offline HTML fixtures. */
     public List<DiscoveredPosting> parse(Document doc) {
         List<DiscoveredPosting> out = new ArrayList<>();
-        Elements cards = doc.select("article.jobTuple, div.srp-jobtuple-wrapper, div[data-job-id]");
+        // Naukri Next.js 2025/2026 — multiple fallback selectors for resilience
+        Elements cards = doc.select(
+                "article.jobTuple, " +
+                "div.srp-jobtuple-wrapper, " +
+                "div[data-job-id], " +
+                "div.job-tuple-wrapper, " +
+                ".cust-job-tuple");
+        log.debug("Naukri parse: found {} raw cards", cards.size());
+
         for (Element card : cards) {
             String title = firstText(card,
-                    "a.title", "h2.title a", ".jobTitle a", "a[data-job-title]");
+                    "a.title", "a.row1", ".jobTitle a",
+                    "a[title]", "h2 a", ".designation a");
             String company = firstText(card,
-                    "a.subTitle", ".companyName a", ".subTitle a", "a.comp-name");
+                    "a.subTitle", ".companyName a", ".comp-name",
+                    "a.comp-name", ".company-name a");
             String location = firstText(card,
-                    ".locWdth span", ".job-details-others .location", "[data-city]");
+                    ".locWdth span", ".location span", "[data-city]",
+                    ".loc-wrap span", ".ni-job-tuple-icon-srp-location span");
             String experience = firstText(card,
-                    ".expwdth", ".exp span", "[data-requiredexp]");
+                    ".expwdth", ".exp span", "[data-requiredexp]", ".experience span");
             String salary = firstText(card,
-                    ".salary", "[data-salary]", ".salary span");
+                    ".salary", "[data-salary]", ".sal-wrap span");
+
             String jobUrl = firstAttr(card, "abs:href",
-                    "a.title", "h2.title a", ".jobTitle a");
+                    "a.title", "a.row1", ".jobTitle a", "a[title]", "h2 a");
+            if (jobUrl == null || jobUrl.isBlank()) {
+                jobUrl = card.attr("abs:href");
+            }
             String externalId = extractExternalId(jobUrl, card);
-            if (externalId == null || title == null) continue;
+            if (externalId == null || title == null) {
+                log.trace("Naukri: skipping card — title={} externalId={}", title, externalId);
+                continue;
+            }
 
             String description = joinNonBlank(experience, salary);
             out.add(new DiscoveredPosting(
@@ -185,7 +227,6 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         int idx = url.lastIndexOf('-');
         if (idx < 0) return null;
         String tail = url.substring(idx + 1);
-        // e.g. "software-engineer-abc-123456789?..." → 123456789
         int q = tail.indexOf('?');
         if (q >= 0) tail = tail.substring(0, q);
         return tail.isBlank() ? null : "naukri:" + tail;
@@ -202,13 +243,12 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         return sb.length() == 0 ? null : sb.toString();
     }
 
-    private void politeSleep(int page) {
+    private void politeSleep() {
         try {
-            long ms = 2000L + (long) (Math.random() * 1500);
+            long ms = 2000L + (long) (Math.random() * 1000);
             Thread.sleep(ms);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
     }
 }
-

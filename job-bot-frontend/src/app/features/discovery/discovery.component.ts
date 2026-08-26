@@ -58,6 +58,13 @@ import { ConfigService } from '../../core/config/thresholds';
                       [class.on]="rec() === r" (click)="rec.set(rec() === r ? null : r)">{{ label(r) }}</button>
             </div>
           </div>
+          <div class="field">
+            <label>Posted within</label>
+            <div class="rail-toggles">
+              <button *ngFor="let a of ageOptions" class="toggle"
+                      [class.on]="ageFilter() === a.days" (click)="ageFilter.set(ageFilter() === a.days ? null : a.days)">{{ a.label }}</button>
+            </div>
+          </div>
           <button class="btn ghost small" (click)="clear()" *ngIf="dirty()">Clear filters</button>
         </div>
 
@@ -231,9 +238,15 @@ export class DiscoveryPageComponent implements OnInit {
   minScore = signal(0);
   platform = signal<string | null>(null);
   rec = signal<string | null>(null);
+  ageFilter = signal<number | null>(null);
 
   platforms = ['NAUKRI', 'LINKEDIN', 'INDEED'];
   recommendations = ['STRONG_APPLY', 'APPLY', 'REVIEW'];
+  ageOptions = [
+    { label: '24h', days: 1 },
+    { label: '1 week', days: 7 },
+    { label: '1 month', days: 30 },
+  ];
 
   ngOnInit(): void { this.reload(); }
 
@@ -241,7 +254,8 @@ export class DiscoveryPageComponent implements OnInit {
     this.loading.set(true);
     this.discovery.coverage().subscribe({ next: c => this.coverage.set(c), error: () => {} });
     this.discovery.sources().subscribe({ next: s => this.sources.set(s), error: () => {} });
-    this.matchSvc.top(40, 250).subscribe({
+    // Pass the current age filter to the backend so it filters at query time
+    this.matchSvc.top(40, 250, this.ageFilter() ?? undefined).subscribe({
       next: m => { this.matches.set(m); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -264,9 +278,9 @@ export class DiscoveryPageComponent implements OnInit {
     });
   });
 
-  dirty = computed(() => !!this.q() || this.minScore() > 0 || !!this.platform() || !!this.rec());
+  dirty = computed(() => !!this.q() || this.minScore() > 0 || !!this.platform() || !!this.rec() || this.ageFilter() != null);
 
-  clear(): void { this.q.set(''); this.minScore.set(0); this.platform.set(null); this.rec.set(null); }
+  clear(): void { this.q.set(''); this.minScore.set(0); this.platform.set(null); this.rec.set(null); this.ageFilter.set(null); this.reload(); }
 
   scan(): void {
     this.scanning.set(true);
