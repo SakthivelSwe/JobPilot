@@ -70,5 +70,11 @@ public class JobQueueController {
         int n = service.approveAllAbove(BigDecimal.valueOf(threshold));
         return ResponseEntity.ok(ApiResponse.ok(n));
     }
+
+    @PostMapping("/approve-bulk")
+    public ResponseEntity<ApiResponse<Integer>> approveBulk(@RequestBody java.util.List<UUID> postingIds) {
+        int n = service.bulkApproveByPostingIds(postingIds);
+        return ResponseEntity.ok(ApiResponse.ok(n));
+    }
 }
 

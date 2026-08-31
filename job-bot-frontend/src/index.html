@@ -12,6 +12,13 @@
 </head>
 <body>
   <app-root></app-root>
+  <script>
+    document.addEventListener('wheel', function(e) {
+      if (e.target.type === 'number') {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
 </body>
 </html>
 

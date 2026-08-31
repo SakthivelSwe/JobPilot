@@ -13,8 +13,8 @@ dotenv.config();
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8080';
 const POLL_MS = Number(process.env.POLL_INTERVAL_MS || 30_000);
-const MIN_APPLY_GAP = Number(process.env.MIN_INTER_APPLY_MS || 5 * 60 * 1000);
-const MAX_APPLY_GAP = Number(process.env.MAX_INTER_APPLY_MS || 8 * 60 * 1000);
+const MIN_APPLY_GAP = Number(process.env.MIN_INTER_APPLY_MS || 60_000);
+const MAX_APPLY_GAP = Number(process.env.MAX_INTER_APPLY_MS || 90_000);
 const HEALTH_PORT = Number(process.env.HEALTH_PORT || 3001);
 const PLATFORMS = (process.env.PLATFORMS || 'NAUKRI,INDEED')
   .split(',')
@@ -38,14 +38,33 @@ async function main() {
     process.env.API_PASSWORD,
     process.env.API_TOKEN || undefined,
   );
-  await api.ensureAuthenticated();
+  
+  let authenticated = false;
+  while (!authenticated) {
+    try {
+      await api.ensureAuthenticated();
+      authenticated = true;
+    } catch (e: any) {
+      logger.warn(`[ENGINE] Failed to connect to backend (${e.message}). Retrying in 5 seconds...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
 
   const bm = new BrowserManager(process.env.CHROME_PROFILE_DIR);
-  const context = await bm.launch();
+  let context = await bm.launch();
+  
+  for (const platform of PLATFORMS) {
+    await bm.injectSession(api, platform);
+  }
+  
   const rate = new PlatformRateChecker(api);
 
-  const naukri = new NaukriApplicator(context);
-  const indeed = new IndeedApplicator(context);
+  // BUG FIX: Keep applicators as mutable refs so we can re-create them after
+  // a browser crash without losing the outer scope references.
+  let applicators = {
+    naukri: new NaukriApplicator(context),
+    indeed: new IndeedApplicator(context),
+  };
 
   startHealthEndpoint();
 
@@ -61,7 +80,41 @@ async function main() {
         const job = await api.getNextPending(platform);
         if (!job) continue;
         logger.info(`Picked ${platform} job ${job.id} — ${job.title} @ ${job.company}`);
-        const result = await applyOn(platform, job, naukri, indeed);
+
+        let result;
+        try {
+          result = await applyOn(platform, job, applicators.naukri, applicators.indeed);
+        } catch (e: any) {
+          const msg: string = e.message || '';
+          // BUG FIX: Detect browser/context crash and auto-recover
+          if (
+            msg.includes('Target page, context or browser has been closed') ||
+            msg.includes('browserContext.newPage') ||
+            msg.includes('Browser has been closed') ||
+            msg.includes('Target closed')
+          ) {
+            logger.warn(`[ENGINE] Browser context crashed — attempting auto-recovery...`);
+            try {
+              await bm.close().catch(() => {});
+              context = await bm.launch();
+              for (const p of PLATFORMS) {
+                await bm.injectSession(api, p);
+              }
+              applicators = {
+                naukri: new NaukriApplicator(context),
+                indeed: new IndeedApplicator(context),
+              };
+              logger.info('[ENGINE] ✅ Browser recovered. Retrying job...');
+              result = await applyOn(platform, job, applicators.naukri, applicators.indeed);
+            } catch (recoveryErr: any) {
+              logger.error(`[ENGINE] Browser recovery failed: ${recoveryErr.message}`);
+              result = { success: false, reason: `BROWSER_CRASH: ${msg}` };
+            }
+          } else {
+            result = { success: false, reason: `EXCEPTION: ${msg}` };
+          }
+        }
+
         try {
           await api.report({
             jobQueueId: job.id,
@@ -71,14 +124,18 @@ async function main() {
         } catch (e: any) {
           logger.warn(`Report failed: ${e.message}`);
         }
+
         if (result.success) {
           stats.applied++;
           stats.lastAppliedAt = new Date().toISOString();
+          logger.info(`[ENGINE] ✅ Applied! Waiting ${Math.round(MIN_APPLY_GAP / 1000)}s before next job.`);
           await humanDelay(MIN_APPLY_GAP, MAX_APPLY_GAP);
         } else {
           stats.failed++;
           stats.lastError = result.reason ?? null;
-          await humanDelay(60_000, 120_000);
+          // Company website redirect: short wait (these are fast failures)
+          const waitMs = result.reason?.includes('COMPANY_WEBSITE_REDIRECT') ? 5_000 : 60_000;
+          await humanDelay(waitMs, waitMs + 30_000);
         }
       }
     } catch (e: any) {
@@ -126,4 +183,3 @@ main().catch((e) => {
   logger.error(`Fatal: ${e.message}`);
   process.exit(1);
 });
-

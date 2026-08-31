@@ -123,6 +123,12 @@ type Tab = 'pending' | 'auto';
         </tbody>
       </table>
     </ng-container>
+
+    <div class="pagination" *ngIf="totalPages() > 1">
+      <button class="btn secondary small" [disabled]="page() === 0" (click)="prevPage()">Previous</button>
+      <span class="muted" style="font-size:14px;">Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} items)</span>
+      <button class="btn secondary small" [disabled]="page() >= totalPages() - 1" (click)="nextPage()">Next</button>
+    </div>
   `,
   styles: [`
     .queue-card { padding: 16px 20px; }
@@ -134,6 +140,7 @@ type Tab = 'pending' | 'auto';
     @keyframes pulse-dot {
       0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
     }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; padding: 16px 0; border-top: 1px solid var(--line); }
   `],
 })
 export class QueuePageComponent implements OnInit {
@@ -145,19 +152,49 @@ export class QueuePageComponent implements OnInit {
   auto = signal<JobQueueEntry[]>([]);
   stats = signal<Record<string, number> | null>(null);
 
+  page = signal(0);
+  pageSize = signal(50);
+  totalPages = signal(0);
+  totalElements = signal(0);
+
   ngOnInit(): void { this.load(); }
 
   setTab(t: Tab) {
     this.tab.set(t);
+    this.page.set(0);
     this.load();
   }
 
   load(): void {
     this.queue.stats().subscribe(s => this.stats.set(s as any));
     if (this.tab() === 'pending') {
-      this.queue.pending(0, 50).subscribe(p => this.pending.set(p.content));
+      this.queue.pending(this.page(), this.pageSize()).subscribe(p => {
+        this.pending.set(p.content);
+        this.totalPages.set(p.totalPages);
+        this.totalElements.set(p.totalElements);
+      });
     } else {
-      this.queue.autoApplying(0, 50).subscribe(p => this.auto.set(p.content));
+      this.queue.autoApplying(this.page(), this.pageSize()).subscribe(p => {
+        this.auto.set(p.content);
+        this.totalPages.set(p.totalPages);
+        this.totalElements.set(p.totalElements);
+      });
+    }
+  }
+
+  nextPage() {
+    if (this.page() < this.totalPages() - 1) {
+      this.page.set(this.page() + 1);
+      this.load();
+      window.scrollTo(0, 0);
+    }
+  }
+
+  prevPage() {
+    if (this.page() > 0) {
+      this.page.set(this.page() - 1);
+      this.load();
+      window.scrollTo(0, 0);
     }
   }
 

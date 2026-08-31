@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from '../logger';
 import { ApplyResult, PendingJob } from '../types';
-import { humanClick, humanDelay, humanType } from './HumanBehavior';
+import { humanDelay, humanType } from './HumanBehavior';
 
 const CANDIDATE = {
   name: process.env.CANDIDATE_NAME || 'Sakthivel Vinayagam',
@@ -22,6 +22,17 @@ const CANDIDATE = {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+/**
+ * Domains that indicate Naukri is redirecting to an external company ATS.
+ * These jobs cannot be applied to via the Naukri flow — they're sent to MANUAL.
+ */
+const COMPANY_ATS_DOMAINS = [
+  'greenhouse.io', 'lever.co', 'workday.com', 'myworkdayjobs.com',
+  'taleo.net', 'icims.com', 'smartrecruiters.com', 'jobvite.com',
+  'successfactors.com', 'brassring.com', 'infytq.com', 'infosys.com',
+  'tcs.com', 'wipro.com', 'hcltech.com', 'accenture.com',
+];
+
 export class NaukriApplicator {
   private isLoggedIn = false;
 
@@ -32,9 +43,11 @@ export class NaukriApplicator {
     try {
       await humanDelay(2000, 4000);
       logger.info(`[NAUKRI] Opening ${job.jobUrl}`);
-      await page.goto(job.jobUrl, { waitUntil: 'networkidle', timeout: 45_000 });
-      // Wait an extra 3 seconds for JS-rendered apply button
-      await page.waitForTimeout(3000);
+
+      // BUG FIX: Use domcontentloaded — Naukri never reaches networkidle
+      await page.goto(job.jobUrl, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+      // Wait for JS-rendered content
+      await page.waitForTimeout(4000);
 
       // Check for CAPTCHA
       if (await this.hasCaptcha(page)) {
@@ -45,7 +58,15 @@ export class NaukriApplicator {
 
       // Handle login wall if present
       if (await page.locator('input[type=password]').count()) {
-        await this.doLogin(page);
+        logger.warn('[NAUKRI] Encountered login wall. Session is missing or invalid.');
+        return this.fail('LOGIN_REQUIRED', job, page);
+      }
+
+      // BUG FIX: Detect "Apply on Company Website" redirect BEFORE looking for apply button
+      const redirectResult = await this.detectCompanyWebsiteRedirect(page);
+      if (redirectResult) {
+        logger.warn(`[NAUKRI] Job redirects to external ATS (${redirectResult}) — sending to Manual queue`);
+        return { success: false, reason: 'COMPANY_WEBSITE_REDIRECT' };
       }
 
       // Check already applied
@@ -54,11 +75,17 @@ export class NaukriApplicator {
         return { success: false, reason: 'ALREADY_APPLIED' };
       }
 
+      // BUG FIX: Close any open Naukri nav drawer that blocks the Apply button
+      await this.closeNavDrawer(page);
+
       // Find and click apply button
       const applyBtn = await this.findApplyButton(page);
       if (!applyBtn) return this.fail('NO_APPLY_BUTTON', job, page);
 
-      await humanClick(page, applyBtn);
+      // BUG FIX: Use dispatchEvent('click') to bypass Naukri's sticky nav overlay
+      // that intercepts pointer events when using normal mouse-click
+      logger.info(`[NAUKRI] Clicking Apply button for ${job.title}`);
+      await applyBtn.dispatchEvent('click');
       await humanDelay(3000, 5000);
 
       // Handle any popup / modal that appeared after clicking Apply
@@ -76,10 +103,19 @@ export class NaukriApplicator {
         return { success: true, screenshotPath: shot };
       }
 
-      // Additional check: look for chatbot "Applied" confirmation  
-      const chatbotSuccess = await page.locator('.chatbot_DrawerContentWrapper, [class*="applySuccess"]').count();
+      // Additional check: look for chatbot "Applied" confirmation
+      const chatbotSuccess = await page.locator('.chatbot_DrawerContentWrapper, [class*="applySuccess"], [class*="apply-success"]').count();
       if (chatbotSuccess > 0) {
         logger.info(`[NAUKRI] ✅ Applied via chatbot: ${job.title} @ ${job.company}`);
+        return { success: true, screenshotPath: shot };
+      }
+
+      // Final check: look for thank you page or confirmation text
+      const thankYou = await page.locator(
+        'text=Thank you, text=application has been, text=Application sent, [class*="thankYou"], [class*="thank-you"]'
+      ).count();
+      if (thankYou > 0) {
+        logger.info(`[NAUKRI] ✅ Applied (thank you page): ${job.title} @ ${job.company}`);
         return { success: true, screenshotPath: shot };
       }
 
@@ -92,31 +128,74 @@ export class NaukriApplicator {
     }
   }
 
-  private async doLogin(page: Page): Promise<void> {
-    logger.info('[NAUKRI] Login wall — filling credentials');
+  /**
+   * BUG FIX: Detect if this job redirects to a company's own ATS website.
+   * Naukri shows a button labeled "Apply on Company Website" or similar,
+   * with an href pointing to an external domain.
+   * Returns the matched domain string if detected, null if it's a normal Naukri job.
+   */
+  private async detectCompanyWebsiteRedirect(page: Page): Promise<string | null> {
     try {
-      const emailSel = 'input#usernameField, input[name=email], input[type=email], input[placeholder*="Email" i]';
-      const passSel = 'input#passwordField, input[name=password], input[type=password]';
-      await humanType(page, emailSel, CANDIDATE.email);
-      await humanDelay(600, 900);
-      await humanType(page, passSel, CANDIDATE.password);
-      await humanDelay(600, 1000);
-      const submitBtn = page.locator('button[type=submit], button:has-text("Login"), button:has-text("Sign in")').first();
-      await humanClick(page, submitBtn);
-      await humanDelay(4000, 6000);
-      this.isLoggedIn = true;
-      logger.info('[NAUKRI] Login completed');
-    } catch (e: any) {
-      logger.warn(`[NAUKRI] Login failed: ${e.message}`);
+      // Check for explicit "Apply on company website" button text
+      const redirectBtn = page.locator(
+        'a:has-text("Apply on Company Website"), a:has-text("Apply on company website"), ' +
+        'button:has-text("Apply on Company Website"), a:has-text("Apply at"), ' +
+        '[class*="companyApply"], [class*="company-apply"]'
+      );
+      if (await redirectBtn.count() > 0) {
+        const href = await redirectBtn.first().getAttribute('href').catch(() => null);
+        if (href) {
+          for (const domain of COMPANY_ATS_DOMAINS) {
+            if (href.includes(domain)) return domain;
+          }
+          // Even if domain not in our list, it's still an external redirect
+          if (href.startsWith('http') && !href.includes('naukri.com')) {
+            return new URL(href).hostname;
+          }
+        }
+        return 'external-company-site';
+      }
+
+      // Check if the page URL itself is no longer on naukri (we got redirected)
+      const currentUrl = page.url();
+      if (!currentUrl.includes('naukri.com')) {
+        for (const domain of COMPANY_ATS_DOMAINS) {
+          if (currentUrl.includes(domain)) return domain;
+        }
+        return new URL(currentUrl).hostname;
+      }
+
+      return null;
+    } catch {
+      return null;
     }
   }
+
+  /**
+   * BUG FIX: Close Naukri's navigation drawer that overlays the Apply button.
+   * The drawer-wrapper div intercepts pointer events, making normal clicks fail.
+   */
+  private async closeNavDrawer(page: Page): Promise<void> {
+    try {
+      // Close any open drawer by pressing Escape
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+
+      // Also try clicking away from the header area to dismiss dropdowns
+      await page.mouse.click(100, 500);
+      await page.waitForTimeout(500);
+    } catch {
+      // Ignore — best effort
+    }
+  }
+
+
 
   /**
    * Handles the post-apply modal/chatbot on Naukri.
    * Naukri's modern Easy Apply shows a chatbot with questions we need to fill.
    */
   private async handleApplyModal(page: Page, job: PendingJob): Promise<void> {
-    // Wait a bit for the modal to open
     await humanDelay(2000, 3000);
 
     // Handle chatbot questions in a loop (up to 10 rounds)
@@ -139,11 +218,9 @@ export class NaukriApplicator {
 
       logger.info(`[NAUKRI] Chatbot question: ${questionText}`);
 
-      // Determine answer using AI or defaults
       const answer = await this.answerQuestion(questionText || '', job);
       logger.info(`[NAUKRI] Answering: "${questionText}" → "${answer}"`);
 
-      // Fill the input
       const inputSel = '.chatbot_Input input, .chatbot_Input textarea, [class*="chatbot"] input:visible, [class*="chatbot"] textarea:visible';
       const inputEl = page.locator(inputSel).last();
 
@@ -153,18 +230,16 @@ export class NaukriApplicator {
         await inputEl.fill(answer);
         await humanDelay(500, 1000);
 
-        // Click send/next button
         const sendBtn = page.locator(
           '.chatbot_Input button, button:has-text("Send"), ' +
           'button[class*="send"], button[class*="submit" i]:visible, ' +
           'button:has-text("Next"), button:has-text("Submit")'
         ).last();
         if (await sendBtn.count()) {
-          await humanClick(page, sendBtn);
+          await sendBtn.dispatchEvent('click');
           await humanDelay(1500, 2500);
         }
       } else {
-        // Maybe it's a select/dropdown
         const selectEl = page.locator('[class*="chatbot"] select:visible').last();
         if (await selectEl.count()) {
           const options = await selectEl.locator('option').allTextContents();
@@ -172,15 +247,14 @@ export class NaukriApplicator {
           await selectEl.selectOption({ label: bestOption });
           await humanDelay(800, 1200);
         } else {
-          break; // No fillable element found
+          break;
         }
       }
     }
 
-    // Handle resume selection modal if it appears
     await this.handleResumeSelection(page);
 
-    // Click final submit if available
+    // Click final submit if available — use dispatchEvent to avoid overlay issues
     for (const submitSel of [
       'button:has-text("Submit")',
       'button:has-text("Apply")',
@@ -190,7 +264,7 @@ export class NaukriApplicator {
     ]) {
       const btn = page.locator(submitSel).last();
       if (await btn.count()) {
-        await humanClick(page, btn);
+        await btn.dispatchEvent('click');
         await humanDelay(3000, 5000);
         break;
       }
@@ -198,22 +272,19 @@ export class NaukriApplicator {
   }
 
   private async handleResumeSelection(page: Page): Promise<void> {
-    // If Naukri shows a resume picker
     const resumeModal = await page.locator(
       '[class*="resumeSelect"], [class*="resume-select"], ' +
       'div:has-text("Select Resume"), div:has-text("Choose Resume")'
     ).count();
-    
+
     if (!resumeModal) return;
 
-    // Try to select the most recent resume
     const resumeOption = page.locator('[class*="resumeItem"]:first-child, .resume-card:first-child').first();
     if (await resumeOption.count()) {
-      await humanClick(page, resumeOption);
+      await resumeOption.dispatchEvent('click');
       await humanDelay(1000, 2000);
     }
 
-    // If there's a file upload option and resume not on Naukri, upload it
     const fileInput = page.locator('input[type="file"]').first();
     if (await fileInput.count() && fs.existsSync(CANDIDATE.resumePath)) {
       try {
@@ -226,17 +297,13 @@ export class NaukriApplicator {
     }
   }
 
-  /**
-   * Answer a question using Gemini AI, with fallback to keyword-based defaults.
-   */
   private async answerQuestion(question: string, job: PendingJob): Promise<string> {
     const q = question.toLowerCase();
 
-    // Fast keyword-based defaults first (no API call needed)
     if (q.includes('experience') || q.includes('years')) return CANDIDATE.experience;
     if (q.includes('current ctc') || q.includes('current salary') || q.includes('current package')) return CANDIDATE.currentCTC;
     if (q.includes('expected ctc') || q.includes('expected salary') || q.includes('expected package')) return CANDIDATE.expectedCTC;
-    if (q.includes('notice') ) return CANDIDATE.noticePeriod;
+    if (q.includes('notice')) return CANDIDATE.noticePeriod;
     if (q.includes('location') || q.includes('city')) return CANDIDATE.currentLocation;
     if (q.includes('name')) return CANDIDATE.name;
     if (q.includes('phone') || q.includes('mobile') || q.includes('contact')) return CANDIDATE.phone;
@@ -262,20 +329,17 @@ Answer in under 100 words. Be direct and professional.`;
       });
       const data = await res.json() as any;
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (text) return text.substring(0, 200); // truncate if too long
+      if (text) return text.substring(0, 200);
     } catch (e: any) {
       logger.warn(`[NAUKRI] Gemini AI failed for question "${question}": ${e.message}`);
     }
 
-    // Generic fallback
     return `I have ${CANDIDATE.experience} years of experience in ${CANDIDATE.skills}`;
   }
 
-  /** Pick the best option from a dropdown based on the question context */
   private pickBestOption(options: string[], question: string): string {
     const q = question.toLowerCase();
     if (q.includes('notice')) {
-      // Find the shortest notice period option
       const sorted = options.filter(o => o !== '').sort((a, b) => {
         const numA = parseInt(a) || 999;
         const numB = parseInt(b) || 999;
@@ -298,21 +362,34 @@ Answer in under 100 words. Be direct and professional.`;
   }
 
   private async findApplyButton(page: Page) {
+    // BUG FIX: Updated selectors to match current Naukri HTML structure (2024-2026)
     const candidates = [
-      '#apply-button',                         // Confirmed: Naukri's main apply button ID
-      'button.apply-button',                   // Confirmed: Naukri apply button class
-      'button.styles_apply-button__uJI3A',     // Confirmed: Naukri scoped class
+      '#apply-button',
+      'button.styles_apply-button__uJI3A',
+      'button.apply-button',
+      // New Naukri layout selectors
+      'button[class*="styles_apply-button"]',
+      'button[class*="apply-button"]',
+      'button[id*="apply"]',
       'button:has-text("Apply")',
       'button:has-text("Easy Apply")',
       'button:has-text("Apply for this job")',
-      'a:has-text("Apply")',
-      'button[id*="apply" i]',
       '[class*="applyBtn"]',
       '[class*="apply-btn"]',
+      // Do NOT match "Apply on Company Website" — that would be a false positive
     ];
     for (const sel of candidates) {
       const l = page.locator(sel).first();
-      if (await l.count() && await l.isVisible()) return l;
+      try {
+        if (await l.count() && await l.isVisible({ timeout: 2000 })) {
+          // Verify it's not a company website redirect button
+          const text = (await l.textContent() || '').toLowerCase();
+          if (text.includes('company website') || text.includes('apply at')) continue;
+          return l;
+        }
+      } catch {
+        continue;
+      }
     }
     return null;
   }

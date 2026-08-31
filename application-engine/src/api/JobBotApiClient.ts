@@ -86,5 +86,18 @@ export class JobBotApiClient {
       return res.data?.data as PlatformConfig;
     });
   }
+
+  /** Fetches the raw session state (cookies) from the backend. */
+  async getSessionState(platform: string): Promise<any | null> {
+    return this.retryOn401(async () => {
+      const res = await this.http.get(`/api/engine/session`, {
+        params: { platform },
+        validateStatus: (s) => s === 200 || s === 204,
+      });
+      if (res.status === 204) return null;
+      // Spring might return it as a string if not mapped correctly, but if it parses as JSON, Axios gives us an object.
+      return typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+    });
+  }
 }
 

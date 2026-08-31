@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { DiscoveryService, SourceHealthRow, CoverageStats } from '../../core/services/discovery.service';
 import { MatchService, RankedMatch } from '../../core/services/match.service';
 import { ManualQueueService } from '../../core/services/manual-queue.service';
+import { JobQueueService } from '../../core/services/job-queue.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfigService } from '../../core/config/thresholds';
 
@@ -59,6 +60,20 @@ import { ConfigService } from '../../core/config/thresholds';
             </div>
           </div>
           <div class="field">
+            <label>Work Mode</label>
+            <div class="rail-toggles">
+              <button *ngFor="let m of ['REMOTE', 'HYBRID', 'ONSITE']" class="toggle"
+                      [class.on]="workMode() === m" (click)="workMode.set(workMode() === m ? null : m)">{{ m | titlecase }}</button>
+            </div>
+          </div>
+          <div class="field" *ngIf="locations().length">
+            <label>Location</label>
+            <select class="rail-select" [ngModel]="locationFilter()" (ngModelChange)="locationFilter.set($event)">
+              <option [ngValue]="null">All Locations</option>
+              <option *ngFor="let l of locations()" [ngValue]="l">{{ l }}</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Posted within</label>
             <div class="rail-toggles">
               <button *ngFor="let a of ageOptions" class="toggle"
@@ -85,7 +100,15 @@ import { ConfigService } from '../../core/config/thresholds';
           <span class="count numeric">{{ visible().length }}</span>
           <span class="feed-head-label">opportunit{{ visible().length === 1 ? 'y' : 'ies' }}</span>
           <span class="spacer"></span>
-          <span class="muted" style="font-size:12.5px;">ranked by match</span>
+          <div class="bulk-actions" *ngIf="visible().length > 0">
+            <button class="btn secondary small" [disabled]="selectedIds().size === 0" (click)="bulkAutoApplySelected()">
+              Auto Apply Selected ({{ selectedIds().size }})
+            </button>
+            <button class="btn small" (click)="bulkAutoApplyAll()">
+              Auto Apply All ({{ visible().length }})
+            </button>
+          </div>
+          <span class="muted" style="font-size:12.5px; margin-left:12px;">ranked by match</span>
         </div>
 
         <!-- Loading skeletons -->
@@ -114,7 +137,12 @@ import { ConfigService } from '../../core/config/thresholds';
 
         <!-- Feed -->
         <div class="feed-body" *ngIf="!loading() && visible().length">
-          <article class="opp" *ngFor="let m of visible()" [class.is-strong]="m.match.overallScore >= strong()">
+          <article class="opp" *ngFor="let m of paginatedVisible()" [class.is-strong]="m.match.overallScore >= strong()">
+            
+            <div class="opp-checkbox">
+              <input type="checkbox" [checked]="selectedIds().has(m.posting.id)" (change)="toggleSelection(m.posting.id)" />
+            </div>
+
             <div class="opp-score" [class.strong]="m.match.overallScore >= strong()" [class.mid]="m.match.overallScore >= 55 && m.match.overallScore < 80">
               <span class="numeric">{{ m.match.overallScore }}</span>
               <small>match</small>
@@ -149,6 +177,13 @@ import { ConfigService } from '../../core/config/thresholds';
             </div>
           </article>
         </div>
+
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="!loading() && totalPages() > 1">
+          <button class="btn secondary small" [disabled]="page() === 0" (click)="prevPage()">Previous</button>
+          <span class="muted" style="font-size:14px;">Page {{ Math.min(page(), totalPages() - 1) + 1 }} of {{ totalPages() }} ({{ visible().length }} items)</span>
+          <button class="btn secondary small" [disabled]="page() >= totalPages() - 1" (click)="nextPage()">Next</button>
+        </div>
       </section>
     </div>
   `,
@@ -170,6 +205,7 @@ import { ConfigService } from '../../core/config/thresholds';
     .src-name { font-weight:600; color:var(--ink); }
     .src-status { margin-left:auto; color:var(--ink-3); font-size:12px; }
     .rail-note { font-size:11.5px; color:var(--ink-3); margin:10px 0 0; line-height:1.5; }
+    .rail-select { width: 100%; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 6px; font: 13px var(--font-sans); color: var(--ink); background: var(--surface); }
 
     .feed-head { display:flex; align-items:baseline; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--line); }
     .feed-head .count { font-size:22px; font-weight:600; color:var(--ink); }
@@ -181,6 +217,9 @@ import { ConfigService } from '../../core/config/thresholds';
     .opp.is-strong::before { content:''; position:absolute; left:-16px; top:20px; bottom:20px; width:3px; background:var(--accent); border-radius:2px; }
     .opp:hover { background:var(--surface-2); }
     .skeleton-opp { align-items:center; }
+
+    .opp-checkbox { display:flex; align-items:center; justify-content:center; padding-top:14px; }
+    .bulk-actions { display:flex; gap:8px; align-items:center; }
 
     .opp-score { width:56px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
       border:1px solid var(--line); border-radius:12px; padding:8px 0; color:var(--ink-3); }
@@ -215,12 +254,15 @@ import { ConfigService } from '../../core/config/thresholds';
       .opp-actions { flex-direction:row; align-items:center; width:100%; }
       .masthead { flex-direction:column; align-items:stretch; }
     }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; padding: 16px 0; border-top: 1px solid var(--line); }
   `]
 })
 export class DiscoveryPageComponent implements OnInit {
+  protected readonly Math = Math;
   private discovery = inject(DiscoveryService);
   private matchSvc = inject(MatchService);
   private manual = inject(ManualQueueService);
+  private queue = inject(JobQueueService);
   private toast = inject(ToastService);
   private config = inject(ConfigService);
 
@@ -239,6 +281,40 @@ export class DiscoveryPageComponent implements OnInit {
   platform = signal<string | null>(null);
   rec = signal<string | null>(null);
   ageFilter = signal<number | null>(null);
+  workMode = signal<string | null>(null);
+  locationFilter = signal<string | null>(null);
+  
+  locations = computed(() => {
+    const locs = new Set<string>();
+    for (const m of this.matches()) {
+      if (m.posting.location) {
+        const parts = m.posting.location.split(/[,|–-]/).map(s => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (p.toLowerCase() !== 'india' && p.length > 2 && p.toLowerCase() !== 'remote' && p.toLowerCase() !== 'hybrid') {
+             locs.add(p);
+          }
+        }
+      }
+    }
+    return Array.from(locs).sort();
+  });
+  
+  selectedIds = signal<Set<string>>(new Set());
+  
+  page = signal(0);
+  pageSize = signal(50);
+  
+  paginatedVisible = computed(() => {
+    const total = this.visible().length;
+    let p = this.page();
+    const maxPage = Math.max(0, Math.ceil(total / this.pageSize()) - 1);
+    if (p > maxPage) p = maxPage;
+    
+    const start = p * this.pageSize();
+    return this.visible().slice(start, start + this.pageSize());
+  });
+  
+  totalPages = computed(() => Math.ceil(this.visible().length / this.pageSize()));
 
   platforms = ['NAUKRI', 'LINKEDIN', 'INDEED'];
   recommendations = ['STRONG_APPLY', 'APPLY', 'REVIEW'];
@@ -255,7 +331,7 @@ export class DiscoveryPageComponent implements OnInit {
     this.discovery.coverage().subscribe({ next: c => this.coverage.set(c), error: () => {} });
     this.discovery.sources().subscribe({ next: s => this.sources.set(s), error: () => {} });
     // Pass the current age filter to the backend so it filters at query time
-    this.matchSvc.top(40, 250, this.ageFilter() ?? undefined).subscribe({
+    this.matchSvc.top(1000, 1000, this.ageFilter() ?? undefined).subscribe({
       next: m => { this.matches.set(m); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -270,6 +346,22 @@ export class DiscoveryPageComponent implements OnInit {
       if (m.match.overallScore < min) return false;
       if (pf && (m.posting.source || '').toUpperCase() !== pf) return false;
       if (rec && (m.match.recommendation || '') !== rec) return false;
+      
+      if (this.workMode()) {
+        const mode = this.workMode();
+        const rmType = (m.posting.remoteType || '').toUpperCase();
+        const locStr = (m.posting.location || '').toUpperCase();
+        if (mode === 'REMOTE' && rmType !== 'REMOTE' && !locStr.includes('REMOTE')) return false;
+        if (mode === 'HYBRID' && rmType !== 'HYBRID' && !locStr.includes('HYBRID')) return false;
+        if (mode === 'ONSITE' && (rmType === 'REMOTE' || rmType === 'HYBRID' || locStr.includes('REMOTE') || locStr.includes('HYBRID'))) return false;
+      }
+      
+      if (this.locationFilter()) {
+        const locFilter = this.locationFilter()!.toLowerCase();
+        const locStr = (m.posting.location || '').toLowerCase();
+        if (!locStr.includes(locFilter)) return false;
+      }
+      
       if (q) {
         const hay = `${m.posting.title} ${m.posting.company} ${m.posting.location} ${m.match.matchedSkills.join(' ')}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -278,14 +370,29 @@ export class DiscoveryPageComponent implements OnInit {
     });
   });
 
-  dirty = computed(() => !!this.q() || this.minScore() > 0 || !!this.platform() || !!this.rec() || this.ageFilter() != null);
+  dirty = computed(() => !!this.q() || this.minScore() > 0 || !!this.platform() || !!this.rec() || this.ageFilter() != null || !!this.workMode() || !!this.locationFilter());
 
-  clear(): void { this.q.set(''); this.minScore.set(0); this.platform.set(null); this.rec.set(null); this.ageFilter.set(null); this.reload(); }
+  clear(): void { this.q.set(''); this.minScore.set(0); this.platform.set(null); this.rec.set(null); this.ageFilter.set(null); this.workMode.set(null); this.locationFilter.set(null); this.page.set(0); this.reload(); }
 
   setAgeFilter(days: number): void {
     // Toggle: if same filter clicked, clear it; otherwise set it
     this.ageFilter.set(this.ageFilter() === days ? null : days);
+    this.page.set(0);
     this.reload(); // Re-fetch from backend with the new date window
+  }
+
+  nextPage() {
+    if (this.page() < this.totalPages() - 1) {
+      this.page.set(this.page() + 1);
+      window.scrollTo(0, 0);
+    }
+  }
+
+  prevPage() {
+    if (this.page() > 0) {
+      this.page.set(this.page() - 1);
+      window.scrollTo(0, 0);
+    }
   }
 
   scan(): void {
@@ -300,6 +407,43 @@ export class DiscoveryPageComponent implements OnInit {
     this.manual.add(m.posting.id).subscribe({
       next: () => this.toast.success('Saved to manual queue'),
       error: () => this.toast.error('Could not save'),
+    });
+  }
+
+  toggleSelection(id: string): void {
+    const current = new Set(this.selectedIds());
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    this.selectedIds.set(current);
+  }
+
+  bulkAutoApplySelected(): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.queue.approveBulk(ids).subscribe({
+      next: (n) => {
+        this.toast.success(`Sent ${n} jobs to auto-apply queue`);
+        this.selectedIds.set(new Set());
+        // Reload to remove them from discovery if they no longer match, or just let them stay but now they're enqueued.
+        this.reload();
+      },
+      error: () => this.toast.error('Failed to auto-apply selected jobs')
+    });
+  }
+
+  bulkAutoApplyAll(): void {
+    const ids = this.visible().map(m => m.posting.id);
+    if (ids.length === 0) return;
+    this.queue.approveBulk(ids).subscribe({
+      next: (n) => {
+        this.toast.success(`Sent ${n} jobs to auto-apply queue`);
+        this.selectedIds.set(new Set());
+        this.reload();
+      },
+      error: () => this.toast.error('Failed to auto-apply jobs')
     });
   }
 

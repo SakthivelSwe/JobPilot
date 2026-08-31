@@ -65,5 +65,8 @@ export class JobQueueService {
   approveAllAbove(threshold = 80) {
     return this.api.post<number>(`/api/queue/approve-all-above?threshold=${threshold}`, {});
   }
+  approveBulk(postingIds: string[]) {
+    return this.api.post<number>('/api/queue/approve-bulk', postingIds);
+  }
 }
 

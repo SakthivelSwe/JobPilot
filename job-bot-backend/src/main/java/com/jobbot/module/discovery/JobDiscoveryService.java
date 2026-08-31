@@ -24,6 +24,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Discovery orchestrator.
@@ -159,29 +160,37 @@ public class JobDiscoveryService {
                        Company company) {
         int added = 0;
         for (DiscoveredPosting dp : raw) {
-            JobPosting candidate = normalizer.normalize(dp);
-            DeduplicationService.DedupResult r = dedup.check(candidate);
-            switch (r.outcome()) {
-                case NEW -> {
-                    if (company != null) candidate.setCompanyId(company.getId());
-                    candidate.setApplicationCapability(capability.determine(candidate.getSource()));
-                    if (profile.isPresent()) {
+            try {
+                JobPosting candidate = normalizer.normalize(dp);
+                DeduplicationService.DedupResult r = dedup.check(candidate);
+                switch (r.outcome()) {
+                    case NEW -> {
+                        if (company != null) candidate.setCompanyId(company.getId());
+                        candidate.setApplicationCapability(capability.determine(candidate.getSource()));
+                        if (profile.isPresent()) {
+                            try {
+                                MatchResult m = matchService.match(profile.get(), candidate);
+                                candidate.setMatchScore(m.overallScore());
+                                candidate.setRecommendation(m.recommendation().name());
+                            } catch (Exception ignored) { /* score best-effort */ }
+                        }
+                        JobPosting saved = postingRepository.save(candidate);
                         try {
-                            MatchResult m = matchService.match(profile.get(), candidate);
-                            candidate.setMatchScore(m.overallScore());
-                            candidate.setRecommendation(m.recommendation().name());
-                        } catch (Exception ignored) { /* score best-effort */ }
+                            queueService.enqueueFromPosting(saved, threshold);
+                        } catch (Exception e) {
+                            log.warn("Enqueue failed for '{}': {}", saved.getTitle(), e.getMessage());
+                        }
+                        added++;
                     }
-                    JobPosting saved = postingRepository.save(candidate);
-                    try {
-                        queueService.enqueueFromPosting(saved, threshold);
-                    } catch (Exception e) {
-                        log.warn("Enqueue failed for '{}': {}", saved.getTitle(), e.getMessage());
-                    }
-                    added++;
+                    case CROSS_SOURCE_DUPLICATE -> dedup.mergeSourceHistory(r.existing(), candidate);
+                    case ALREADY_SEEN -> { /* skip */ }
                 }
-                case CROSS_SOURCE_DUPLICATE -> dedup.mergeSourceHistory(r.existing(), candidate);
-                case ALREADY_SEEN -> { /* skip */ }
+            } catch (DataIntegrityViolationException e) {
+                // BUG FIX: Race condition — two concurrent scans tried to insert the same job.
+                // Treat as a duplicate and continue gracefully instead of crashing the whole scan.
+                log.debug("Skipping duplicate posting (concurrent insert race): {}", e.getMessage());
+            } catch (Exception e) {
+                log.warn("Failed to ingest posting '{}': {}", dp.title(), e.getMessage());
             }
         }
         return added;

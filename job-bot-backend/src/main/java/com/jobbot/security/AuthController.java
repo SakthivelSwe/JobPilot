@@ -159,5 +159,16 @@ public class AuthController {
 
         return ApiResponse.ok("Account deleted completely");
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/debug-users")
+    public ApiResponse<List<Map<String, Object>>> debugUsers() {
+        var users = jdbcTemplate.queryForList("SELECT id, username FROM app_user");
+        for (var u : users) {
+            String uid = (String) u.get("id");
+            var stats = jdbcTemplate.queryForList("SELECT status, count(*) as cnt FROM job_queue WHERE user_id = ? GROUP BY status", uid);
+            u.put("stats", stats);
+        }
+        return ApiResponse.ok(users);
+    }
 }
 

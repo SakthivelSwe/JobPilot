@@ -50,6 +50,18 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
             "&searchType=adv&src=jobsearchDesk&pageNo=%d&keyword=%s&location=%s" +
             "&experience=%d&experienceDD=%d&seoKey=%s";
 
+    /**
+     * Domains in applyRedirectUrl that indicate the job redirects to a company's
+     * own ATS. These cannot be applied to via Naukri's Easy Apply flow and are
+     * filtered out at discovery time so they never pollute the queue.
+     */
+    private static final java.util.Set<String> COMPANY_ATS_DOMAINS = java.util.Set.of(
+            "greenhouse.io", "lever.co", "workday.com", "myworkdayjobs.com",
+            "taleo.net", "icims.com", "smartrecruiters.com", "jobvite.com",
+            "successfactors.com", "brassring.com", "infytq.com",
+            "infosys.com", "tcs.com", "wipro.com", "hcltech.com"
+    );
+
     private final PlatformSessionService sessionService;
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient http = HttpClient.newBuilder()
@@ -68,7 +80,7 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
 
     @Override
     public List<DiscoveredPosting> discover(TargetRole role, JobCriteria criteria) {
-        String location = firstLocation(role, criteria, "india");
+        List<String> locations = getLocations(role, criteria, List.of("india"));
         String keyword  = role.getRoleTitle();
         int expMin = role.getMinimumExperience() != null ? role.getMinimumExperience() : 0;
         int expMax = role.getMaximumExperience() != null ? role.getMaximumExperience() : expMin + 3;
@@ -101,16 +113,21 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         }
 
         List<DiscoveredPosting> out = new ArrayList<>();
-        for (int page = 1; page <= MAX_PAGES; page++) {
-            List<DiscoveredPosting> pageResults = tryApiPage(keyword, location, expMin, expMax, roleSlug, page, sessionCookieHeader);
-            if (pageResults.isEmpty() && page == 1) {
-                log.warn("Naukri API returned 0 for '{}', trying HTML fallback", keyword);
-                pageResults = tryHtmlFallback(roleSlug, location, role, page, sessionCookieHeader);
+        int locCount = 0;
+        for (String location : locations) {
+            if (locCount++ >= 3) break; // Limit to 3 locations to prevent excessive API calls
+            
+            for (int page = 1; page <= MAX_PAGES; page++) {
+                List<DiscoveredPosting> pageResults = tryApiPage(keyword, location, expMin, expMax, roleSlug, page, sessionCookieHeader);
+                if (pageResults.isEmpty() && page == 1) {
+                    log.warn("Naukri API returned 0 for '{}' in '{}', trying HTML fallback", keyword, location);
+                    pageResults = tryHtmlFallback(roleSlug, location, role, page, sessionCookieHeader);
+                }
+                log.info("Naukri page {}: {} jobs for role '{}' in '{}'", page, pageResults.size(), keyword, location);
+                out.addAll(pageResults);
+                if (pageResults.isEmpty()) break;
+                politeSleep();
             }
-            log.info("Naukri page {}: {} jobs for role '{}'", page, pageResults.size(), keyword);
-            out.addAll(pageResults);
-            if (pageResults.isEmpty()) break;
-            politeSleep();
         }
         return out;
     }
@@ -182,6 +199,15 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
                 if (extId != null) extId = "naukri:" + extId;
                 String exp = text(job, "experienceText", "experience");
                 String sal = text(job, "salaryDetail", "salary");
+
+                // BUG FIX: Filter out company-ATS redirect jobs at discovery time.
+                // These have an applyRedirectUrl pointing to external ATS domains.
+                // They cannot be applied to via Naukri's own flow.
+                String applyRedirectUrl = text(job, "applyRedirectUrl", "jdRedirectUrl", "redirectUrl");
+                if (isCompanyAtsRedirect(applyRedirectUrl)) {
+                    log.debug("Skipping company-ATS redirect job '{}' @ {} → {}", title, company, applyRedirectUrl);
+                    continue;
+                }
 
                 if (title == null || extId == null) continue;
                 out.add(new DiscoveredPosting(
@@ -273,6 +299,20 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
+    /**
+     * Returns true if the given URL points to an external company ATS domain.
+     * These jobs cannot be applied to via Naukri Easy Apply.
+     */
+    private static boolean isCompanyAtsRedirect(String url) {
+        if (url == null || url.isBlank()) return false;
+        String lower = url.toLowerCase(Locale.ROOT);
+        for (String domain : COMPANY_ATS_DOMAINS) {
+            if (lower.contains(domain)) return true;
+        }
+        // If it's any non-naukri external URL, treat as redirect
+        return lower.startsWith("http") && !lower.contains("naukri.com");
+    }
+
     String buildSearchUrl(String roleSlug, String locationSlug, TargetRole role, int page) {
         StringBuilder sb = new StringBuilder("https://www.naukri.com/");
         sb.append(URLEncoder.encode(roleSlug, StandardCharsets.UTF_8)).append("-jobs");
@@ -291,11 +331,11 @@ public class NaukriDiscoveryAdapter implements SearchBasedAdapter {
         return s.endsWith("?") ? s.substring(0, s.length() - 1) : s;
     }
 
-    private String firstLocation(TargetRole role, JobCriteria c, String def) {
+    private List<String> getLocations(TargetRole role, JobCriteria c, List<String> def) {
         if (role.getLocations() != null && !role.getLocations().isEmpty())
-            return role.getLocations().get(0);
+            return role.getLocations();
         if (c != null && c.getLocations() != null && !c.getLocations().isEmpty())
-            return c.getLocations().get(0);
+            return c.getLocations();
         return def;
     }
 

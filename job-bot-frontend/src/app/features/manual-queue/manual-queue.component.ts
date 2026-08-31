@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ManualQueueService, ManualQueueEntry } from '../../core/services/manual-queue.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -35,7 +35,7 @@ import { ToastService } from '../../core/services/toast.service';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let j of items()" style="border-top:1px solid #eef2f7;">
+          <tr *ngFor="let j of paginatedItems()" style="border-top:1px solid #eef2f7;">
             <td style="padding:8px 4px;"><strong>{{ j.matchScore }}</strong></td>
             <td>{{ j.company }}</td>
             <td>{{ j.role }}</td>
@@ -56,8 +56,17 @@ import { ToastService } from '../../core/services/toast.service';
         </tbody>
       </table>
     </div>
+
+    <div class="pagination" *ngIf="totalPages() > 1">
+      <button class="btn secondary small" [disabled]="page() === 0" (click)="prevPage()">Previous</button>
+      <span class="muted" style="font-size:14px;">Page {{ page() + 1 }} of {{ totalPages() }} ({{ items().length }} items)</span>
+      <button class="btn secondary small" [disabled]="page() >= totalPages() - 1" (click)="nextPage()">Next</button>
+    </div>
   `,
-  styles: [`.btn.secondary.active { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }`]
+  styles: [
+    `.btn.secondary.active { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }`,
+    `.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; padding: 16px 0; border-top: 1px solid var(--line); }`
+  ]
 })
 export class ManualQueuePageComponent implements OnInit {
   private queue = inject(ManualQueueService);
@@ -66,12 +75,46 @@ export class ManualQueuePageComponent implements OnInit {
   items = signal<ManualQueueEntry[]>([]);
   filter = signal<string>('PENDING');
 
+  page = signal(0);
+  pageSize = signal(50);
+  
+  paginatedItems = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.items().slice(start, start + this.pageSize());
+  });
+  
+  totalPages = computed(() => Math.ceil(this.items().length / this.pageSize()));
+
   ngOnInit(): void { this.load(); }
 
-  setFilter(f: string): void { this.filter.set(f); this.load(); }
+  setFilter(f: string): void { 
+    this.filter.set(f); 
+    this.page.set(0);
+    this.load(); 
+  }
 
   load(): void {
-    this.queue.list(this.filter() || undefined).subscribe(list => this.items.set(list));
+    this.queue.list(this.filter() || undefined).subscribe(list => {
+      this.items.set(list);
+      // Ensure page isn't out of bounds after load
+      if (this.page() >= Math.ceil(list.length / this.pageSize()) && list.length > 0) {
+        this.page.set(Math.ceil(list.length / this.pageSize()) - 1);
+      }
+    });
+  }
+
+  nextPage() {
+    if (this.page() < this.totalPages() - 1) {
+      this.page.set(this.page() + 1);
+      window.scrollTo(0, 0);
+    }
+  }
+
+  prevPage() {
+    if (this.page() > 0) {
+      this.page.set(this.page() - 1);
+      window.scrollTo(0, 0);
+    }
   }
 
   open(j: ManualQueueEntry): void {

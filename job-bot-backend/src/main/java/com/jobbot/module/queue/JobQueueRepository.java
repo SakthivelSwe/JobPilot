@@ -17,6 +17,8 @@ public interface JobQueueRepository extends JpaRepository<JobQueueEntry, UUID> {
 
     Optional<JobQueueEntry> findByExternalIdAndPlatform(String externalId, String platform);
 
+    List<JobQueueEntry> findByJobPostingIdIn(List<UUID> postingIds);
+
     Page<JobQueueEntry> findByStatusOrderByMatchScoreDescCreatedAtDesc(
             JobQueueStatus status, Pageable pageable);
 
@@ -41,5 +43,16 @@ public interface JobQueueRepository extends JpaRepository<JobQueueEntry, UUID> {
             + "where q.status = com.jobbot.module.queue.JobQueueStatus.PENDING_REVIEW "
             + "and q.matchScore >= :threshold")
     List<JobQueueEntry> findPendingAboveThreshold(@Param("threshold") BigDecimal threshold);
+
+    /**
+     * Find all jobs stuck in AUTO_APPLYING (engine crashed mid-apply).
+     * These need to be reset to APPROVED so they can be retried.
+     */
+    @Query("select q from JobQueueEntry q where q.status = com.jobbot.module.queue.JobQueueStatus.AUTO_APPLYING")
+    List<JobQueueEntry> findAllAutoApplying();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value = "update job_queue set status = 'APPROVED', failure_reason = 'Reset from AUTO_APPLYING on server restart' where status = 'AUTO_APPLYING'", nativeQuery = true)
+    int resetAllAutoApplyingNative();
 }
 

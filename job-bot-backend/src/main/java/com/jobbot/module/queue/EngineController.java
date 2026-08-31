@@ -23,6 +23,20 @@ import java.util.UUID;
 public class EngineController {
 
     private final JobQueueService service;
+    private final com.jobbot.module.platform.PlatformSessionService sessionService;
+
+    /**
+     * Fetch the authenticated session's storageState JSON string.
+     */
+    @GetMapping("/session")
+    public ResponseEntity<String> getSessionState(@RequestParam String platform) {
+        String userId = com.jobbot.security.SecurityUtils.getCurrentUserId();
+        String json = sessionService.loadSessionCookieString(platform, userId);
+        if (json == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(json);
+    }
 
     /**
      * Fetch the next APPROVED job for a platform. Atomically transitions it to

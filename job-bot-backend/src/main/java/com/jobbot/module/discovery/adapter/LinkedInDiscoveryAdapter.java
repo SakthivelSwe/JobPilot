@@ -54,22 +54,27 @@ public class LinkedInDiscoveryAdapter implements SearchBasedAdapter {
     @Override
     public List<DiscoveredPosting> discover(TargetRole role, JobCriteria criteria) {
         String keywords = role.getRoleTitle();
-        String location = firstLocation(role, criteria);
+        List<String> locations = getLocations(role, criteria, List.of("India"));
         String experienceLevel = experienceLevelParam(role);
         List<DiscoveredPosting> out = new ArrayList<>();
 
-        for (int page = 0; page < MAX_PAGES; page++) {
-            int start = page * PAGE_SIZE;
-            String url = buildSearchUrl(keywords, location, experienceLevel, start);
-            try {
-                Document doc = fetch(url);
-                List<DiscoveredPosting> cards = parse(doc);
-                out.addAll(cards);
-                if (cards.isEmpty()) break;
-                politeSleep();
-            } catch (IOException e) {
-                log.warn("LinkedIn fetch failed at start={} : {}", start, e.getMessage());
-                break;
+        int locCount = 0;
+        for (String location : locations) {
+            if (locCount++ >= 3) break; // Limit to 3 locations
+
+            for (int page = 0; page < MAX_PAGES; page++) {
+                int start = page * PAGE_SIZE;
+                String url = buildSearchUrl(keywords, location, experienceLevel, start);
+                try {
+                    Document doc = fetch(url);
+                    List<DiscoveredPosting> cards = parse(doc);
+                    out.addAll(cards);
+                    if (cards.isEmpty()) break;
+                    politeSleep();
+                } catch (IOException e) {
+                    log.warn("LinkedIn fetch failed for location '{}' at start={} : {}", location, start, e.getMessage());
+                    break;
+                }
             }
         }
         return out;
@@ -156,14 +161,14 @@ public class LinkedInDiscoveryAdapter implements SearchBasedAdapter {
         return "4,5";
     }
 
-    private String firstLocation(TargetRole role, JobCriteria c) {
+    private List<String> getLocations(TargetRole role, JobCriteria c, List<String> def) {
         if (role.getLocations() != null && !role.getLocations().isEmpty()) {
-            return role.getLocations().get(0);
+            return role.getLocations();
         }
         if (c != null && c.getLocations() != null && !c.getLocations().isEmpty()) {
-            return c.getLocations().get(0);
+            return c.getLocations();
         }
-        return null;
+        return def;
     }
 
     private static String enc(String s) {

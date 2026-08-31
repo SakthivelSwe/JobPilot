@@ -10,6 +10,8 @@ import com.jobbot.module.resume.variant.ResumeSelectionService;
 import com.jobbot.module.resume.variant.VariantScore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,22 @@ public class JobQueueService {
     private final ApplicationRepository applicationRepository;
     private final ResumeSelectionService resumeSelectionService;
 
+    // ---------- Startup recovery ----------
+
+    /**
+     * On every server start, reset all jobs stuck in AUTO_APPLYING back to APPROVED.
+     * This happens when the application-engine crashed or was restarted mid-apply,
+     * leaving jobs in an in-flight limbo that the engine can never pick up again.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void resetStaleAutoApplying() {
+        int resetCount = repository.resetAllAutoApplyingNative();
+        if (resetCount > 0) {
+            log.info("Startup recovery: reset {} AUTO_APPLYING jobs back to APPROVED", resetCount);
+        }
+    }
+
     // ---------- Enqueue ----------
 
     /**
@@ -61,8 +79,6 @@ public class JobQueueService {
         String reason = null;
         BigDecimal match = posting.getMatchScore() != null
                 ? BigDecimal.valueOf(posting.getMatchScore()) : null;
-        // TEMPORARY OVERRIDE FOR TESTING: Auto-approve all jobs to trigger the engine
-        status = JobQueueStatus.APPROVED;
 
         String variant = null;
         try {
@@ -146,6 +162,25 @@ public class JobQueueService {
         return n;
     }
 
+    /** Approve specific PENDING_REVIEW entries by their associated JobPosting IDs. */
+    @Transactional
+    public int bulkApproveByPostingIds(List<UUID> postingIds) {
+        if (postingIds == null || postingIds.isEmpty()) return 0;
+        List<JobQueueEntry> hits = repository.findByJobPostingIdIn(postingIds);
+        int n = 0;
+        OffsetDateTime now = OffsetDateTime.now();
+        for (JobQueueEntry e : hits) {
+            if (e.getStatus() == JobQueueStatus.PENDING_REVIEW) {
+                e.setStatus(JobQueueStatus.APPROVED);
+                e.setReviewedAt(now);
+                n++;
+            }
+        }
+        repository.saveAll(hits);
+        log.info("Bulk-approved {} entries by posting IDs", n);
+        return n;
+    }
+
     // ---------- Engine (application-engine + Chrome extension) ----------
 
     /**
@@ -186,7 +221,9 @@ public class JobQueueService {
         JobQueueEntry e = get(id);
         String upper = reason == null ? "" : reason.toUpperCase(Locale.ROOT);
         boolean requiresHuman = upper.contains("CAPTCHA") || upper.contains("BLOCKED")
-                || upper.contains("LOGIN") || upper.contains("2FA");
+                || upper.contains("LOGIN") || upper.contains("2FA")
+                || upper.contains("COMPANY_WEBSITE_REDIRECT")   // External ATS — user must apply manually
+                || upper.contains("NO_APPLY_BUTTON");           // No Easy Apply — user must apply manually
         e.setStatus(requiresHuman ? JobQueueStatus.MANUAL_APPLY : JobQueueStatus.FAILED_APPLY);
         e.setFailureReason(reason);
         log.warn("Apply failed for '{}' @ {} → {} ({})",
